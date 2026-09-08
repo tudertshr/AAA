@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AAA — Authentification, Autorisation, Traçabilité — Fiche de révision</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F7FA; --surface:#FFFFFF; --surface-2:#FBFCFD; --text:#152033; --muted:#5B6577;
+  --border:#E1E6ED; --accent:#2563EB; --accent-ink:#ffffff; --accent-2:#7C3AED;
+  --crit:#DC2626; --crit-bg:#FDE8E8; --elev:#EA580C; --elev-bg:#FDEAD9;
+  --moy:#B7791F; --moy-bg:#FBF0D2; --faib:#16A34A; --faib-bg:#E1F6E9;
+  --code-bg:#EEF1F5; --shadow: 0 1px 2px rgba(21,32,51,.06), 0 6px 20px rgba(21,32,51,.05);
+  --radius: 10px;
+  --hl:#9A3412; --hl-bg:#FFEDD5; --hl-border:#FDBA74; --rowline:#C7CFDA;
+  --tac:#0E7C86; --tac-bg:#E1F4F4; --rad:#7C3AED; --rad-bg:#EFE7FE; --loc:#B7791F; --loc-bg:#FBF0D2;
+}
+html.dark{
+  --bg:#0A0F1A; --surface:#111A2B; --surface-2:#0D1524; --text:#E7ECF3; --muted:#93A0B7;
+  --border:#223050; --accent:#60A5FA; --accent-ink:#06122a; --accent-2:#C4B5FD;
+  --crit:#F87171; --crit-bg:#3A1616; --elev:#FB923C; --elev-bg:#3A2410;
+  --moy:#FACC15; --moy-bg:#332B08; --faib:#4ADE80; --faib-bg:#0F2E1B;
+  --code-bg:#0F1B30; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+  --hl:#FDBA74; --hl-bg:#3A2410; --hl-border:#7C3F13; --rowline:#3A4C74;
+  --tac:#2DD4BF; --tac-bg:#0F2E2E; --rad:#C4B5FD; --rad-bg:#241B3A; --loc:#FACC15; --loc-bg:#332B08;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{margin:0; background:var(--bg); color:var(--text); font-family:'Inter',system-ui,sans-serif; line-height:1.6; transition:background .2s ease, color .2s ease;}
+h1,h2,h3,h4{font-family:'Manrope',sans-serif; color:var(--text); line-height:1.25; margin:0 0 .5em;}
+h1{font-weight:800;} h2{font-weight:800;} h3{font-weight:700;} h4{font-weight:700;}
+a{color:var(--accent);}
+.mono{font-family:'IBM Plex Mono',monospace;}
+p{margin:.4em 0 .9em; color:var(--text);}
+ul,ol{margin:.3em 0 1em; padding-left:1.3em;}
+li{margin:.25em 0;}
+
+#progress{position:fixed; top:0; left:0; height:3px; background:var(--accent); z-index:1000; width:0%; transition:width .1s linear;}
+
+.topbar{position:sticky; top:0; z-index:900; display:flex; align-items:center; gap:12px; padding:10px 16px; background:color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter:blur(8px); border-bottom:1px solid var(--border);}
+.topbar .brand{display:flex; align-items:center; gap:8px; font-family:'Manrope'; font-weight:800; font-size:.95rem; white-space:nowrap;}
+.topbar .brand .dot{width:9px; height:9px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);}
+.menu-btn{display:none; background:none; border:1px solid var(--border); border-radius:8px; color:var(--text); width:36px; height:36px; cursor:pointer; font-size:1.1rem;}
+.searchwrap{flex:1; max-width:520px; position:relative;}
+.searchwrap input{width:100%; padding:9px 34px 9px 34px; border-radius:999px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-size:.9rem; outline:none;}
+.searchwrap input:focus{border-color:var(--accent);}
+.searchwrap .icon{position:absolute; left:12px; top:50%; transform:translateY(-50%); opacity:.5; font-size:.85rem;}
+.searchwrap .count{position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:.72rem; color:var(--muted);}
+.theme-btn{margin-left:auto; background:none; border:1px solid var(--border); border-radius:999px; color:var(--text); padding:8px 14px; cursor:pointer; font-size:.85rem; display:flex; gap:6px; align-items:center; white-space:nowrap;}
+.theme-btn:hover{border-color:var(--accent);}
+
+.layout{display:flex; max-width:1400px; margin:0 auto;}
+.sidebar{width:270px; flex-shrink:0; position:sticky; top:57px; align-self:flex-start; height:calc(100vh - 57px); overflow-y:auto; padding:20px 12px 60px 20px; border-right:1px solid var(--border);}
+.sidebar nav a{display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--muted); font-size:.87rem; padding:7px 10px; border-radius:8px; margin-bottom:2px; font-weight:600;}
+.sidebar nav a:hover{background:var(--surface-2); color:var(--text);}
+.sidebar nav a.active{background:color-mix(in srgb, var(--accent) 14%, transparent); color:var(--accent);}
+.sidebar .group-title{font-size:.68rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:18px 0 6px 10px; font-weight:700;}
+.sidebar .group-title:first-child{margin-top:0;}
+
+main{flex:1; min-width:0; padding:28px 34px 100px;}
+@media (max-width:980px){
+  .sidebar{position:fixed; left:-290px; top:57px; height:calc(100vh - 57px); width:270px; background:var(--bg); z-index:800; transition:left .2s ease; box-shadow:var(--shadow);}
+  .sidebar.open{left:0;}
+  .menu-btn{display:block;}
+  main{padding:20px 16px 90px;}
+  .topbar .brand span.full{display:none;}
+}
+
+.hero{background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--surface)), var(--surface)); border:1px solid var(--border); border-radius:16px; padding:34px 30px; margin-bottom:28px;}
+.hero .eyebrow{font-family:'IBM Plex Mono'; font-size:.75rem; color:var(--accent); font-weight:600;}
+.hero h1{font-size:1.9rem; max-width:820px; margin-top:.3em;}
+.hero p.lead{max-width:680px; color:var(--muted); font-size:1rem;}
+.stat-row{display:flex; gap:14px; flex-wrap:wrap; margin-top:20px;}
+.stat{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 18px; min-width:130px;}
+.stat .num{font-family:'Manrope'; font-weight:800; font-size:1.5rem; color:var(--accent);}
+.stat .lbl{font-size:.78rem; color:var(--muted);}
+.card-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px; margin:20px 0 8px;}
+.nav-card{display:block; text-decoration:none; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; color:var(--text); transition:transform .12s ease, border-color .12s ease;}
+.nav-card:hover{transform:translateY(-2px); border-color:var(--accent);}
+.nav-card .tag{font-family:'IBM Plex Mono'; font-size:.68rem; color:var(--accent); font-weight:600;}
+.nav-card h3{font-size:1rem; margin:.35em 0 .2em;}
+.nav-card p{font-size:.82rem; color:var(--muted); margin:0;}
+
+section.chapter{padding-top:10px; margin-bottom:10px; scroll-margin-top:70px;}
+.chapter > h2{font-size:1.55rem; border-bottom:2px solid var(--border); padding-bottom:.35em; margin-bottom:.6em;}
+h3.part{font-size:1.18rem; margin-top:1.6em; color:var(--accent-2); scroll-margin-top:70px;}
+h4.subpart{font-size:1rem; margin-top:1.1em; scroll-margin-top:70px;}
+.content-block{margin-bottom:14px;}
+.content-block.hide{display:none;}
+mark{background:color-mix(in srgb, var(--accent) 45%, transparent); color:inherit; border-radius:3px; padding:0 2px;}
+
+.callout{border-radius:10px; padding:14px 16px; margin:14px 0; border:1px solid var(--border); background:var(--surface);}
+.callout .head{font-weight:700; font-size:.85rem; display:flex; gap:8px; align-items:center; margin-bottom:4px;}
+.callout p, .callout ul{margin:.2em 0;}
+.callout.retenir{border-left:4px solid var(--accent);}
+.callout.attention{border-left:4px solid var(--elev);}
+.callout.astuce{border-left:4px solid var(--accent-2);}
+.callout.exemple{border-left:4px solid var(--muted); background:var(--surface-2);}
+.callout.def{border-left:4px solid #7C3AED;}
+
+.terme{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin:12px 0;}
+.terme .t{font-family:'IBM Plex Mono'; font-weight:600; font-size:.85rem; color:var(--accent-2);}
+
+.tablewrap{overflow-x:auto; background:var(--surface); border:2px solid var(--accent); border-radius:12px; padding:14px 14px 6px; margin:16px 0; box-shadow:var(--shadow);}
+.tablewrap table{margin:0 0 8px;}
+table{width:100%; border-collapse:collapse; font-size:.87rem; background:transparent;}
+caption{caption-side:top; text-align:left; font-family:'IBM Plex Mono'; font-size:.78rem; font-weight:700; color:var(--hl); background:var(--hl-bg); border:1px solid var(--hl-border); padding:7px 14px; margin:2px 0 14px; border-radius:8px;}
+caption::before{content:'📋 ';}
+th,td{padding:11px 13px; border-bottom:1.5px solid var(--rowline); text-align:left; vertical-align:top;}
+th{background:var(--accent); font-family:'Manrope'; font-weight:800; font-size:.8rem; color:var(--accent-ink); letter-spacing:.01em; border-bottom:1.5px solid var(--accent);}
+tbody tr:nth-child(even) td{background:var(--surface-2);}
+tr:last-child td{border-bottom:none;}
+td.id{font-family:'IBM Plex Mono'; font-weight:600; color:var(--accent);}
+
+.lvl{display:inline-block; padding:2px 10px; border-radius:999px; font-size:.76rem; font-weight:700; white-space:nowrap;}
+.lvl.local{background:var(--loc-bg); color:var(--loc);}
+.lvl.tacacs{background:var(--tac-bg); color:var(--tac);}
+.lvl.radius{background:var(--rad-bg); color:var(--rad);}
+.lvl.ok{background:var(--faib-bg); color:var(--faib);}
+.lvl.no{background:var(--crit-bg); color:var(--crit);}
+
+details.step{background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--hl-border); border-radius:12px; margin:10px 0; overflow:hidden;}
+details.step summary{cursor:pointer; padding:13px 16px; font-family:'Manrope'; font-weight:800; font-size:1rem; list-style:none; display:flex; align-items:center; gap:10px; color:var(--hl);}
+details.step summary::-webkit-details-marker{display:none;}
+details.step summary .num{font-family:'IBM Plex Mono'; font-size:.75rem; background:var(--hl-bg); color:var(--hl); border:1px solid var(--hl-border); font-weight:700; border-radius:6px; padding:3px 9px;}
+details.step summary::after{content:'+'; margin-left:auto; font-size:1.2rem; color:var(--muted);}
+details.step[open] summary::after{content:'–';}
+details.step[open]{border-left-color:var(--hl);}
+details.step .body{padding:0 18px 16px;}
+details.step[open] summary{border-bottom:1px solid var(--border); background:var(--hl-bg);}
+
+.diagram{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px; margin:14px 0; font-size:.85rem;}
+.flow{display:flex; flex-wrap:wrap; align-items:center; gap:8px; justify-content:center;}
+.flow .box{background:var(--hl-bg); border:1.5px solid var(--hl-border); color:var(--hl); border-radius:8px; padding:8px 14px; font-weight:700; font-size:.82rem; text-align:center;}
+.flow .arrow{color:var(--muted); font-size:1.1rem;}
+.flow-col{display:flex; flex-direction:column; gap:6px; align-items:center;}
+
+.keywords{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0;}
+.keywords .kw{font-family:'IBM Plex Mono'; font-size:.75rem; background:var(--code-bg); color:var(--accent); border-radius:6px; padding:4px 10px; font-weight:600;}
+
+pre.cli{background:#0B1220; color:#D6E4FF; border-radius:10px; padding:14px 16px; overflow-x:auto; font-family:'IBM Plex Mono',monospace; font-size:.82rem; line-height:1.7; margin:10px 0; border:1px solid #1E2E4D;}
+pre.cli .c{color:#7EE787;}
+pre.cli .k{color:#79C0FF;}
+pre.cli .v{color:#FFA657;}
+html.dark pre.cli{background:#050A14;}
+.cli-label{font-family:'IBM Plex Mono'; font-size:.7rem; color:var(--muted); margin:14px 0 -4px; text-transform:uppercase; letter-spacing:.05em;}
+
+blockquote.formula{font-family:'IBM Plex Mono'; background:var(--code-bg); border-left:4px solid var(--accent); padding:10px 16px; margin:12px 0; border-radius:6px; font-size:.95rem;}
+
+.qa{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 16px; margin:12px 0;}
+.qa .q{font-weight:700; font-family:'Manrope'; margin-bottom:6px; display:flex; gap:8px;}
+.qa .q .qn{font-family:'IBM Plex Mono'; color:var(--accent); font-size:.85rem;}
+.qa .a{display:none; padding-top:6px; border-top:1px dashed var(--border); margin-top:6px; color:var(--muted);}
+.qa.open .a{display:block;}
+
+#backtotop{position:fixed; bottom:22px; right:22px; width:44px; height:44px; border-radius:50%; background:var(--accent); color:var(--accent-ink); border:none; font-size:1.1rem; cursor:pointer; box-shadow:var(--shadow); display:none; align-items:center; justify-content:center; z-index:850;}
+#backtotop.show{display:flex;}
+
+.ambig{font-style:italic; color:var(--muted); font-size:.85em;}
+.note-add{border-radius:6px; background:color-mix(in srgb, var(--accent-2) 10%, transparent); padding:2px 6px; font-size:.82em;}
+footer.pagefoot{margin-top:50px; padding-top:20px; border-top:1px solid var(--border); color:var(--muted); font-size:.8rem;}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<div class="topbar">
+  <button class="menu-btn" id="menuBtn" aria-label="Menu">☰</button>
+  <div class="brand"><span class="dot"></span><span class="full">AAA — Cisco IOS</span></div>
+  <div class="searchwrap">
+    <span class="icon">🔎</span>
+    <input id="searchInput" type="text" placeholder="Rechercher une commande, une notion…">
+    <span class="count" id="searchCount"></span>
+  </div>
+  <button class="theme-btn" id="themeBtn">🌙 <span id="themeLbl">Sombre</span></button>
+</div>
+
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+  <nav id="sidenav">
+    <a href="#accueil" data-target="accueil">🏠 Accueil</a>
+
+    <div class="group-title">Théorie</div>
+    <a href="#theorie" data-target="theorie">📘 Les 3 A de l'AAA</a>
+    <a href="#lignes" data-target="lignes">🔌 Lignes & method lists</a>
+
+    <div class="group-title">Pratique — AAA locale</div>
+    <a href="#local" data-target="local">🖥️ AAA locale (console &amp; vty)</a>
+
+    <div class="group-title">Pratique — AAA serveur</div>
+    <a href="#serveur" data-target="serveur">🛰️ TACACS+ &amp; RADIUS (console)</a>
+
+    <div class="group-title">Synthèse</div>
+    <a href="#comparaison" data-target="comparaison">⚖️ Comparatif Local / TACACS+ / RADIUS</a>
+    <a href="#labs" data-target="labs">🧪 Récap des 3 labs Packet Tracer</a>
+    <a href="#debug" data-target="debug">🩺 Vérification &amp; dépannage</a>
+    <a href="#retenir" data-target="retenir">🧠 À retenir</a>
+    <a href="#revision" data-target="revision">❓ Révision (Q/R)</a>
+  </nav>
+</aside>
+
+<main id="mainContent">
+
+<!-- ================= ACCUEIL ================= -->
+<section class="chapter" id="accueil">
+  <div class="hero">
+    <div class="eyebrow">FICHE DE RÉVISION — SÉCURITÉ RÉSEAU (NETSEC)</div>
+    <h1>AAA — Authentification, Autorisation, Traçabilité (Accounting)</h1>
+    <p class="lead">Cette fiche couvre le contrôle d'accès administratif sur les équipements Cisco IOS : le modèle <strong>AAA</strong>, l'<strong>AAA locale</strong> (console et lignes vty) et l'<strong>AAA basée serveur</strong> avec <strong>TACACS+</strong> et <strong>RADIUS</strong>, avec toutes les commandes et le récapitulatif des 3 travaux pratiques (Packet Tracer).</p>
+    <div class="stat-row">
+      <div class="stat"><div class="num">3</div><div class="lbl">A : Authentication, Authorization, Accounting</div></div>
+      <div class="stat"><div class="num">3</div><div class="lbl">modes d'AAA (local, TACACS+, RADIUS)</div></div>
+      <div class="stat"><div class="num">3</div><div class="lbl">labs Packet Tracer récapitulés</div></div>
+      <div class="stat"><div class="num">1</div><div class="lbl">tableau comparatif final</div></div>
+    </div>
+  </div>
+
+  <h2 style="border:none; font-size:1.2rem;">Navigation rapide</h2>
+  <div class="card-grid">
+    <a class="nav-card" href="#theorie"><div class="tag">TH. 1</div><h3>Les 3 A de l'AAA</h3><p>Authentication, Authorization, Accounting — définitions et rôle.</p></a>
+    <a class="nav-card" href="#lignes"><div class="tag">TH. 2</div><h3>Lignes & method lists</h3><p>Console, VTY, AUX ; listes de méthodes par défaut ou nommées.</p></a>
+    <a class="nav-card" href="#local"><div class="tag">TP. 1</div><h3>AAA locale</h3><p>Base d'utilisateurs locale, console et vty — commandes pas à pas.</p></a>
+    <a class="nav-card" href="#serveur"><div class="tag">TP. 2</div><h3>TACACS+ & RADIUS</h3><p>AAA centralisée sur serveur externe, console — commandes pas à pas.</p></a>
+    <a class="nav-card" href="#comparaison"><div class="tag">SYNTHÈSE</div><h3>Comparer les 3 méthodes</h3><p>Protocole, port, chiffrement, granularité, cas d'usage.</p></a>
+    <a class="nav-card" href="#labs"><div class="tag">LABS</div><h3>Récap des 3 topologies</h3><p>Objectifs, plan d'adressage type, commandes clés, vérification.</p></a>
+    <a class="nav-card" href="#debug"><div class="tag">DÉPANNAGE</div><h3>Vérification & debug</h3><p>show, debug, test aaa — pour valider une config AAA.</p></a>
+    <a class="nav-card" href="#revision"><div class="tag">RÉVISION</div><h3>Questions / Réponses</h3><p>Auto-évaluation sur les commandes et les concepts AAA.</p></a>
+  </div>
+
+  <div class="content-block">
+    <div class="callout attention">
+      <div class="head">⚠️ Remarque sur la source</div>
+      <p>Les fichiers Packet Tracer (<span class="mono">.pkt</span>) fournis sont dans un format chiffré propriétaire : leur contenu exact (topologie, adressage IP, configs déjà en place) n'a pas pu être extrait automatiquement. Cette fiche reprend donc le déroulé <strong>standard</strong> de ces 3 travaux pratiques (AAA — vue d'ensemble, AAA locale console/vty, AAA serveur TACACS+/RADIUS console) avec les commandes Cisco IOS de référence. Remplacez les adresses IP, noms d'hôtes et secrets d'exemple par ceux de vos propres maquettes.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CHAPITRE 1 : THEORIE ================= -->
+<section class="chapter" id="theorie">
+  <h2>1. Les 3 A de l'AAA</h2>
+
+  <div class="content-block">
+    <div class="terme">
+      <div class="t">📌 Définition — AAA</div>
+      <p><strong>AAA</strong> est un cadre (framework) de sécurité utilisé sur les équipements réseau (routeurs, switches, pare-feux) pour <strong>contrôler qui peut accéder à l'équipement, ce qu'il a le droit d'y faire, et garder une trace de ce qu'il y a fait</strong>. AAA signifie :</p>
+      <ul>
+        <li><strong>Authentication</strong> (Authentification) — Qui es-tu ?</li>
+        <li><strong>Authorization</strong> (Autorisation) — Qu'as-tu le droit de faire ?</li>
+        <li><strong>Accounting</strong> (Traçabilité / comptabilité) — Qu'as-tu fait, et quand ?</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="content-block tablewrap">
+    <table>
+      <caption>Les 3 A en détail</caption>
+      <thead><tr><th>Composant</th><th>Question posée</th><th>Ce qu'il contrôle</th><th>Exemple concret</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Authentication</strong></td><td>Qui es-tu ?</td><td>Vérifie l'identité (identifiant + mot de passe, certificat, clé…)</td><td>Login sur la console d'un routeur</td></tr>
+        <tr><td><strong>Authorization</strong></td><td>Qu'as-tu le droit de faire ?</td><td>Détermine les commandes / ressources autorisées une fois authentifié</td><td>Un technicien n'a accès qu'aux commandes de niveau 1, un admin au niveau 15</td></tr>
+        <tr><td><strong>Accounting</strong></td><td>Qu'as-tu fait ?</td><td>Journalise les connexions, la durée, les commandes exécutées</td><td>Log : « admin1 connecté à 10h02, a tapé "reload" à 10h15 »</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-block">
+    <div class="callout astuce">
+      <div class="head">💡 Astuce pour mémoriser l'ordre</div>
+      <p>Les 3 A s'exécutent toujours dans cet ordre logique : on <strong>vérifie l'identité</strong> (Authentication) → puis on <strong>vérifie les droits</strong> (Authorization) → puis on <strong>enregistre l'activité</strong> (Accounting). On ne peut pas autoriser quelqu'un qu'on n'a pas encore authentifié.</p>
+    </div>
+  </div>
+
+  <h3 class="part">1.1 Pourquoi mettre en place l'AAA ?</h3>
+  <div class="content-block">
+    <p>Sans AAA, un équipement Cisco n'a par défaut qu'un simple <strong>mot de passe de ligne</strong> (line password), identique pour tout le monde, sans nom d'utilisateur, sans journalisation et sans distinction des droits. L'AAA apporte :</p>
+    <ul>
+      <li>Un <strong>identifiant individuel</strong> par administrateur (traçabilité nominative).</li>
+      <li>Une <strong>gestion centralisée</strong> possible (un seul serveur pour tous les équipements du réseau).</li>
+      <li>Un <strong>contrôle fin des droits</strong> (qui peut taper quelles commandes).</li>
+      <li>Une <strong>journalisation</strong> de toutes les actions, utile pour les audits de sécurité.</li>
+      <li>Un <strong>mécanisme de secours</strong> (fallback) si le serveur d'authentification est injoignable.</li>
+    </ul>
+  </div>
+
+  <h3 class="part">1.2 Deux grands modes de mise en œuvre</h3>
+  <div class="content-block tablewrap">
+    <table>
+      <caption>AAA locale vs AAA basée serveur</caption>
+      <thead><tr><th>Mode</th><th>Où sont stockés les comptes ?</th><th>Avantage principal</th><th>Limite principale</th></tr></thead>
+      <tbody>
+        <tr><td><span class="lvl local">AAA locale</span></td><td>Directement dans la configuration de l'équipement (<span class="mono">username</span>)</td><td>Fonctionne même sans réseau / serveur disponible</td><td>Pas centralisé : à recréer sur chaque équipement</td></tr>
+        <tr><td><span class="lvl tacacs">AAA serveur — TACACS+</span></td><td>Sur un serveur AAA externe (Cisco ACS, ISE, tac_plus…)</td><td>Contrôle très fin des commandes autorisées (device administration)</td><td>Dépend de la disponibilité du serveur et du réseau</td></tr>
+        <tr><td><span class="lvl radius">AAA serveur — RADIUS</span></td><td>Sur un serveur AAA externe (FreeRADIUS, Cisco ISE…)</td><td>Standard ouvert, largement utilisé pour l'accès réseau (Wi-Fi, VPN, 802.1X)</td><td>Moins granulaire pour l'autorisation des commandes CLI</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================= CHAPITRE 2 : LIGNES & METHOD LISTS ================= -->
+<section class="chapter" id="lignes">
+  <h2>2. Les lignes d'accès et les listes de méthodes (method lists)</h2>
+
+  <div class="content-block tablewrap">
+    <table>
+      <caption>Les lignes d'accès à un équipement Cisco</caption>
+      <thead><tr><th>Ligne</th><th>Commande d'entrée</th><th>Usage</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Console</strong></td><td class="mono">line console 0</td><td>Accès physique direct par câble console</td></tr>
+        <tr><td><strong>VTY</strong></td><td class="mono">line vty 0 4 (ou 0 15)</td><td>Accès distant (Telnet / SSH)</td></tr>
+        <tr><td><strong>AUX</strong></td><td class="mono">line aux 0</td><td>Accès distant par modem (rarement utilisé aujourd'hui)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-block">
+    <div class="terme">
+      <div class="t">📌 Définition — Liste de méthodes (method list)</div>
+      <p>Une <strong>liste de méthodes</strong> définit la <strong>séquence</strong> de méthodes d'authentification (ou d'autorisation, ou d'accounting) que le routeur doit essayer, <strong>dans l'ordre</strong>, jusqu'à ce que l'une réponde. Elle peut être :</p>
+      <ul>
+        <li><strong>default</strong> — s'applique automatiquement à toutes les lignes qui n'ont pas de liste explicite.</li>
+        <li><strong>nommée</strong> (ex. <span class="mono">CONSOLE-AUTH</span>) — doit être appliquée manuellement sur chaque ligne avec <span class="mono">login authentication &lt;nom&gt;</span>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="content-block">
+    <blockquote class="formula">aaa authentication login {default | NOM-LISTE} méthode1 [méthode2] [méthode3] …</blockquote>
+    <p>Le routeur essaie <strong>méthode1</strong> ; si le serveur ne répond pas (timeout), il passe à <strong>méthode2</strong>, etc. Si une méthode répond mais refuse l'accès (mauvais mot de passe), le routeur <strong>n'essaie pas la méthode suivante</strong> — l'accès est refusé.</p>
+  </div>
+
+  <div class="content-block tablewrap">
+    <table>
+      <caption>Mots-clés de méthode les plus utilisés</caption>
+      <thead><tr><th>Mot-clé</th><th>Signification</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">local</td><td>Utiliser la base d'utilisateurs locale (<span class="mono">username</span>)</td></tr>
+        <tr><td class="mono">group tacacs+</td><td>Utiliser le(s) serveur(s) TACACS+ déclaré(s)</td></tr>
+        <tr><td class="mono">group radius</td><td>Utiliser le(s) serveur(s) RADIUS déclaré(s)</td></tr>
+        <tr><td class="mono">group NOM-GROUPE</td><td>Utiliser un groupe de serveurs personnalisé (sous-ensemble de serveurs)</td></tr>
+        <tr><td class="mono">enable</td><td>Utiliser le mot de passe enable comme méthode de secours</td></tr>
+        <tr><td class="mono">none</td><td>Autoriser l'accès sans authentification (à éviter, sauf test)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-block">
+    <div class="callout attention">
+      <div class="head">⚠️ Erreur fréquente</div>
+      <p>Si l'on crée une liste de méthodes <strong>nommée</strong> (pas <span class="mono">default</span>) mais qu'on oublie de l'appliquer sur la ligne avec <span class="mono">login authentication &lt;nom&gt;</span>, la ligne continue d'utiliser l'ancien mode (mot de passe simple ou aucune authentification) : la liste créée n'a alors <strong>aucun effet</strong>.</p>
+    </div>
+    <div class="callout astuce">
+      <div class="head">💡 Astuce</div>
+      <p>Toujours prévoir une méthode de secours (<span class="mono">local</span> ou <span class="mono">enable</span>) après <span class="mono">group tacacs+</span> ou <span class="mono">group radius</span>, pour ne pas se retrouver bloqué hors de l'équipement si le serveur AAA tombe en panne.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CHAPITRE 3 : AAA LOCALE ================= -->
+<section class="chapter" id="local">
+  <h2>3. AAA locale — console et lignes vty</h2>
+  <div class="content-block">
+    <p>Correspond au TP <strong>« AAA locale console &amp; vty »</strong>. La base des utilisateurs est stockée <strong>directement dans la configuration du routeur ou du switch</strong>, sans serveur externe.</p>
+  </div>
+
+  <div class="content-block tablewrap">
+    <table>
+      <caption>AAA locale — avantages / inconvénients</caption>
+      <thead><tr><th></th><th>Détail</th></tr></thead>
+      <tbody>
+        <tr><td>✅ Avantages</td><td>Simple à mettre en place ; fonctionne même si le réseau ou un serveur externe est en panne ; aucune dépendance externe</td></tr>
+        <tr><td>⚠️ Inconvénients</td><td>Pas centralisé (chaque équipement a sa propre base) ; pénible à maintenir sur un grand parc ; pas de journalisation centralisée des accès</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="part">3.1 Étapes de configuration pas à pas</h3>
+  <div class="content-block">
+    <details class="step" open>
+      <summary><span class="num">1</span> Activer le modèle AAA</summary>
+      <div class="body">
+        <p>Sans cette commande, toutes les autres commandes <span class="mono">aaa …</span> sont indisponibles.</p>
+        <pre class="cli">Router(config)# <span class="k">aaa new-model</span></pre>
+      </div>
+    </details>
+
+    <details class="step" open>
+      <summary><span class="num">2</span> Créer les comptes utilisateurs locaux</summary>
+      <div class="body">
+        <p>Le mot de passe doit être chiffré avec <span class="mono">secret</span> (jamais <span class="mono">password</span> en clair).</p>
+        <pre class="cli">Router(config)# <span class="k">username</span> admin <span class="k">privilege</span> 15 <span class="k">secret</span> Cisco12345
+Router(config)# <span class="k">username</span> technicien <span class="k">privilege</span> 1 <span class="k">secret</span> Tech12345</pre>
+      </div>
+    </details>
+
+    <details class="step" open>
+      <summary><span class="num">3</span> Créer la liste de méthodes d'authentification</summary>
+      <div class="body">
+        <p>Option A — liste <strong>default</strong> (s'applique automatiquement partout) :</p>
+        <pre class="cli">Router(config)# <span class="k">aaa authentication login</span> <span class="v">default</span> local</pre>
+        <p>Option B — liste <strong>nommée</strong> (contrôle plus fin, à appliquer manuellement) :</p>
+        <pre class="cli">Router(config)# <span class="k">aaa authentication login</span> <span class="v">CONSOLE-AUTH</span> local</pre>
+      </div>
+    </details>
+
+    <details class="step" open>
+      <summary><span class="num">4</span> Appliquer sur la ligne console</summary>
+      <div class="body">
+        <pre class="cli">Router(config)# <span class="k">line console 0</span>
+Router(config-line)# <span class="k">login authentication</span> CONSOLE-AUTH
+Router(config-line)# <span class="k">exec-timeout</span> 5 0</pre>
+        <p class="ambig">Si la liste utilisée est <span class="mono">default</span>, l'étape <span class="mono">login authentication</span> n'est pas obligatoire (elle s'applique déjà automatiquement).</p>
+      </div>
+    </details>
+
+    <details class="step" open>
+      <summary><span class="num">5</span> Appliquer sur les lignes vty (accès distant)</summary>
+      <div class="body">
+        <pre class="cli">Router(config)# <span class="k">line vty 0 4</span>
+Router(config-line)# <span class="k">login authentication</span> CONSOLE-AUTH
+Router(config-line)# <span class="k">transport input</span> ssh</pre>
+        <p class="ambig">Il est recommandé de limiter <span class="mono">transport input</span> à <span class="mono">ssh</span> uniquement (le Telnet transporte les identifiants en clair).</p>
+      </div>
+    </details>
+
+    <details class="step">
+      <summary><span class="num">6</span> Vérifier la configuration</summary>
+      <div class="body">
+        <pre class="cli">Router# <span class="k">show running-config | section line</span>
+Router# <span class="k">show running-config | include aaa|username</span></pre>
+        <p>Puis tester : se déconnecter et se reconnecter sur la console ou en SSH avec un des comptes créés — un couple identifiant/mot de passe doit désormais être demandé.</p>
+      </div>
+    </details>
+  </div>
+
+  <div class="content-block">
+    <div class="cli-label">Exemple de configuration complète — AAA locale</div>
+    <pre class="cli">Router(config)# <span class="k">aaa new-model</span>
+Router(config)# <span class="k">username</span> admin <span class="k">privilege</span> 15 <span class="k">secret</span> Cisco12345
+Router(config)# <span class="k">aaa authentication login</span> <span class="v">default</span> local
+Router(config)# <span class="k">line console 0</span>
+Router(config-line)# <span class="k">exec-timeout</span> 5 0
+Router(config-line)# <span class="k">exit</span>
+Router(config)# <span class="k">line vty 0 4</span>
+Router(config-line)# <span class="k">transport input</span> ssh
+Router(config-line)# <span class="k">exit</span></pre>
+  </div>
+
+  <div class="content-block">
+    <div class="callout retenir">
+      <div class="head">🧠 À retenir — AAA locale</div>
+      <ul>
+        <li>Toujours utiliser <span class="mono">username … secret …</span> (jamais <span class="mono">password</span> en clair).</li>
+        <li><span class="mono">aaa new-model</span> est le préalable obligatoire à toute commande AAA.</li>
+        <li>Une liste <span class="mono">default</span> s'applique automatiquement ; une liste nommée doit être appliquée avec <span class="mono">login authentication &lt;nom&gt;</span>.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CHAPITRE 4 : AAA SERVEUR ================= -->
+<section class="chapter" id="serveur">
+  <h2>4. AAA basée serveur — TACACS+ et RADIUS (ligne console)</h2>
+  <div class="content-block">
+    <p>Correspond au TP <strong>« AAA serveur TACACS+ / RADIUS console »</strong>. L'authentification (et l'autorisation, l'accounting) n'est plus vérifiée localement mais déléguée à un <strong>serveur AAA externe</strong> (Cisco ACS / ISE, tac_plus, FreeRADIUS…).</p>
+  </div>
+
+  <h3 class="part">4.1 TACACS+ vs RADIUS — les fondamentaux</h3>
+  <div class="content-block tablewrap">
+    <table>
+      <caption>TACACS+ vs RADIUS</caption>
+      <thead><tr><th>Critère</th><th><span class="lvl tacacs">TACACS+</span></th><th><span class="lvl radius">RADIUS</span></th></tr></thead>
+      <tbody>
+        <tr><td>Origine</td><td>Propriétaire Cisco</td><td>Standard ouvert (RFC 2865/2866)</td></tr>
+        <tr><td>Transport</td><td>TCP, port 49</td><td>UDP, ports 1812 (authentification) et 1813 (accounting)</td></tr>
+        <tr><td>Chiffrement</td><td>Chiffre <strong>tout le paquet</strong></td><td>Chiffre <strong>uniquement le mot de passe</strong></td></tr>
+        <tr><td>Séparation des 3 A</td><td>Authentification, autorisation et accounting <strong>séparés</strong> (contrôle très fin)</td><td>Authentification et autorisation <strong>combinées</strong> en une seule réponse</td></tr>
+        <tr><td>Autorisation par commande</td><td>✅ Possible (contrôle des commandes CLI, niveau par niveau)</td><td>❌ Non supporté nativement</td></tr>
+        <tr><td>Cas d'usage typique</td><td><strong>Administration des équipements réseau</strong> (device administration : qui a le droit de taper quelles commandes)</td><td><strong>Accès réseau des utilisateurs finaux</strong> (Wi-Fi, VPN, 802.1X)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="part">4.2 Configuration Cisco IOS — serveur TACACS+</h3>
+  <div class="content-block">
+    <details class="step" open>
+      <summary><span class="num">1</span> Déclarer le serveur TACACS+</summary>
+      <div class="body">
+        <pre class="cli">Router(config)# <span class="k">tacacs server</span> SRV-TACACS
+Router(config-server-tacacs)# <span class="k">address ipv4</span> 192.168.1.10
+Router(config-server-tacacs)# <span class="k">key</span> Cisco123secret
+Router(config-server-tacacs)# <span class="k">exit</span></pre>
+      </div>
+    </details>
+    <details class="step" open>
+      <summary><span class="num">2</span> (Optionnel) Regrouper le serveur dans un groupe AAA</summary>
+      <div class="body">
+        <pre class="cli">Router(config)# <span class="k">aaa group server tacacs+</span> TAC-GROUP
+Router(config-sg-tacacs+)# <span class="k">server name</span> SRV-TACACS
+Router(config-sg-tacacs+)# <span class="k">exit</span></pre>
+      </div>
+    </details>
+    <details class="step" open>
+      <summary><span class="num">3</span> Activer AAA et créer la liste d'authentification</summary>
+      <div class="body">
+        <pre class="cli">Router(config)# <span class="k">aaa new-model</span>
+Router(config)# <span class="k">aaa authentication login</span> <span class="v">default</span> group tacacs+ local</pre>
+        <p class="ambig">La méthode <span class="mono">local</span> après <span class="mono">group tacacs+</span> sert de <strong>secours</strong> si le serveur ne répond pas.</p>
+      </div>
+    </details>
+    <details class="step" open>
+      <summary><span class="num">4</span> Appliquer sur la console</summary>
+      <div class="body">
+        <pre class="cli">Router(config)# <span class="k">line console 0</span>
+Router(config-line)# <span class="k">login authentication</span> default</pre>
+      </div>
+    </details>
+    <details class="step">
+      <summary><span class="num">5</span> Autorisation et accounting (spécificités TACACS+)</summary>
+      <div class="body">
+        <pre class="cli">Router(config)# <span class="k">aaa authorization exec</span> <span class="v">default</span> group tacacs+ local
+Router(config)# <span class="k">aaa authorization commands 15</span> <span class="v">default</span> group tacacs+ local
+Router(config)# <span class="k">aaa accounting exec</span> <span class="v">default</span> start-stop group tacacs+
+Router(config)# <span class="k">aaa accounting commands 15</span> <span class="v">default</span> start-stop group tacacs+</pre>
+        <p>L'autorisation et l'accounting <strong>par commande</strong> (<span class="mono">commands 15</span>) ne fonctionnent qu'avec TACACS+.</p>
+      </div>
+    </details>
+  </div>
+
+  <h3 class="part">4.3 Configuration Cisco IOS — serveur RADIUS</h3>
+  <div class="content-block">
+    <details class="step" open>
+      <summary><span class="num">1</span> Déclarer le serveur RADIUS</summary>
+      <div class="body">
+        <pre class="cli">Router(config)# <span class="k">radius server</span> SRV-RADIUS
+Router(config-radius-server)# <span class="k">address ipv4</span> 192.168.1.20 <span class="k">auth-port</span> 1812 <span class="k">acct-port</span> 1813
+Router(config-radius-server)# <span class="k">key</span> testing123
+Router(config-radius-server)# <span class="k">exit</span></pre>
+      </div>
+    </details>
+    <details class="step" open>
+      <summary><span class="num">2</span> Activer AAA et créer la liste d'authentification</summary>
+      <div class="body">
+        <pre class="cli">Router(config)# <span class="k">aaa new-model</span>
+Router(config)# <span class="k">aaa authentication login</span> <span class="v">default</span> group radius local</pre>
+      </div>
+    </details>
+    <details class="step" open>
+      <summary><span class="num">3</span> Appliquer sur la console</summary>
+      <div class="body">
+        <pre class="cli">Router(config)# <span class="k">line console 0</span>
+Router(config-line)# <span class="k">login authentication</span> default</pre>
+      </div>
+    </details>
+    <details class="step">
+      <summary><span class="num">4</span> Accounting avec RADIUS</summary>
+      <div class="body">
+        <pre class="cli">Router(config)# <span class="k">aaa accounting exec</span> <span class="v">default</span> start-stop group radius</pre>
+        <p class="ambig">Contrairement à TACACS+, RADIUS ne permet pas l'accounting détaillé par commande.</p>
+      </div>
+    </details>
+  </div>
+
+  <div class="content-block">
+    <div class="callout retenir">
+      <div class="head">🧠 À retenir — AAA serveur</div>
+      <ul>
+        <li>Toujours déclarer le serveur (<span class="mono">tacacs server</span> / <span class="mono">radius server</span>) avec sa clé partagée <strong>avant</strong> de créer la liste d'authentification.</li>
+        <li>Toujours garder <span class="mono">local</span> en méthode de secours après <span class="mono">group tacacs+</span> / <span class="mono">group radius</span>.</li>
+        <li>Seul TACACS+ permet un contrôle fin des commandes autorisées par niveau de privilège.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= COMPARAISON ================= -->
+<section class="chapter" id="comparaison">
+  <h2>5. Comparaison des 3 méthodes d'AAA</h2>
+  <div class="content-block">
+    <p><span class="note-add">Synthèse ajoutée pour faciliter la révision</span> — regroupe les informations vues séparément pour chaque mode.</p>
+  </div>
+  <div class="content-block tablewrap">
+    <table>
+      <caption>Tableau comparatif — AAA locale / TACACS+ / RADIUS</caption>
+      <thead><tr><th>Critère</th><th><span class="lvl local">AAA locale</span></th><th><span class="lvl tacacs">TACACS+</span></th><th><span class="lvl radius">RADIUS</span></th></tr></thead>
+      <tbody>
+        <tr><td><strong>Stockage des comptes</strong></td><td>Sur l'équipement lui-même</td><td>Serveur externe dédié</td><td>Serveur externe dédié</td></tr>
+        <tr><td><strong>Dépendance réseau</strong></td><td>Aucune</td><td>Oui (accès au serveur requis)</td><td>Oui (accès au serveur requis)</td></tr>
+        <tr><td><strong>Protocole / port</strong></td><td>—</td><td>TCP / 49</td><td>UDP / 1812, 1813</td></tr>
+        <tr><td><strong>Chiffrement</strong></td><td>Mot de passe chiffré localement (secret)</td><td>Paquet entier chiffré</td><td>Mot de passe uniquement</td></tr>
+        <tr><td><strong>Granularité des droits</strong></td><td>Par niveau de privilège local</td><td>Très fine (par commande)</td><td>Plus limitée</td></tr>
+        <tr><td><strong>Usage typique</strong></td><td>Petit réseau, secours</td><td>Administration des équipements</td><td>Accès réseau utilisateurs (Wi-Fi, VPN, 802.1X)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="content-block">
+    <div class="callout astuce">
+      <div class="head">💡 Astuce pour ne pas les confondre</div>
+      <ul>
+        <li><strong>Local</strong> = pense « pas de réseau requis, secours toujours disponible ».</li>
+        <li><strong>TACACS+</strong> = pense « Cisco + Contrôle des Commandes + Chiffré en entier » (3 C).</li>
+        <li><strong>RADIUS</strong> = pense « Réseau (Wi-Fi/VPN) + Rapide (UDP) + standaRD ouvert ».</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LABS RECAP ================= -->
+<section class="chapter" id="labs">
+  <h2>6. Récapitulatif des 3 travaux pratiques Packet Tracer</h2>
+
+  <h3 class="part">6.1 Lab 1 — AAA, vue d'ensemble</h3>
+  <div class="content-block">
+    <p><strong>Objectif :</strong> découvrir le fonctionnement global du modèle AAA sur un routeur Cisco, avant de le décliner en local puis en serveur.</p>
+    <ul>
+      <li>Comprendre le rôle des 3 A (Authentication, Authorization, Accounting).</li>
+      <li>Observer le comportement <strong>sans AAA</strong> (mot de passe de ligne simple) puis <strong>avec AAA</strong> activé.</li>
+      <li>Identifier les lignes concernées : console, vty.</li>
+    </ul>
+  </div>
+
+  <h3 class="part">6.2 Lab 2 — AAA locale (console &amp; vty)</h3>
+  <div class="content-block">
+    <p><strong>Objectif :</strong> mettre en place une authentification par compte individuel, sans serveur externe.</p>
+    <div class="tablewrap"><table>
+      <caption>Plan type — Lab AAA locale</caption>
+      <thead><tr><th>Élément</th><th>Valeur d'exemple</th></tr></thead>
+      <tbody>
+        <tr><td>Équipement</td><td>Router / Switch Cisco IOS</td></tr>
+        <tr><td>Comptes locaux</td><td>admin (privilège 15), technicien (privilège 1)</td></tr>
+        <tr><td>Lignes configurées</td><td>console 0, vty 0 4</td></tr>
+        <tr><td>Commande clé</td><td class="mono">aaa authentication login default local</td></tr>
+      </tbody>
+    </table></div>
+    <p><strong>Vérification attendue :</strong> une connexion console ou SSH doit désormais demander un identifiant <em>et</em> un mot de passe (plus seulement un mot de passe).</p>
+  </div>
+
+  <h3 class="part">6.3 Lab 3 — AAA serveur (TACACS+ / RADIUS, console)</h3>
+  <div class="content-block">
+    <p><strong>Objectif :</strong> déléguer l'authentification de la console à un serveur AAA externe, avec secours local en cas de panne du serveur.</p>
+    <div class="tablewrap"><table>
+      <caption>Plan type — Lab AAA serveur</caption>
+      <thead><tr><th>Élément</th><th>Valeur d'exemple</th></tr></thead>
+      <tbody>
+        <tr><td>Serveur TACACS+</td><td>192.168.1.10, clé <span class="mono">Cisco123secret</span></td></tr>
+        <tr><td>Serveur RADIUS</td><td>192.168.1.20, ports 1812/1813, clé <span class="mono">testing123</span></td></tr>
+        <tr><td>Ligne configurée</td><td>console 0</td></tr>
+        <tr><td>Commande clé (TACACS+)</td><td class="mono">aaa authentication login default group tacacs+ local</td></tr>
+        <tr><td>Commande clé (RADIUS)</td><td class="mono">aaa authentication login default group radius local</td></tr>
+      </tbody>
+    </table></div>
+    <p><strong>Vérification attendue :</strong> la connexion console interroge le serveur déclaré ; si celui-ci est éteint ou injoignable dans la maquette, le routeur bascule sur la méthode <span class="mono">local</span>.</p>
+  </div>
+
+  <div class="content-block">
+    <div class="callout exemple">
+      <div class="head">📌 Bon réflexe en Packet Tracer</div>
+      <p>Toujours tester dans cet ordre : (1) serveur AAA <strong>éteint</strong> → vérifier que le compte <span class="mono">local</span> de secours fonctionne toujours ; (2) serveur AAA <strong>allumé</strong> avec la bonne clé partagée → vérifier que le compte du serveur fonctionne ; (3) mauvaise clé partagée → vérifier que l'authentification échoue proprement.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= DEBUG ================= -->
+<section class="chapter" id="debug">
+  <h2>7. Vérification et dépannage</h2>
+  <div class="content-block tablewrap">
+    <table>
+      <caption>Commandes de vérification et de débogage AAA</caption>
+      <thead><tr><th>Commande</th><th>Utilité</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">show running-config | include aaa</td><td>Lister toutes les commandes AAA actives</td></tr>
+        <tr><td class="mono">show aaa servers</td><td>Voir l'état des serveurs TACACS+/RADIUS déclarés</td></tr>
+        <tr><td class="mono">debug aaa authentication</td><td>Suivre en direct le déroulement d'une authentification</td></tr>
+        <tr><td class="mono">debug tacacs</td><td>Détailler les échanges avec un serveur TACACS+</td></tr>
+        <tr><td class="mono">debug radius</td><td>Détailler les échanges avec un serveur RADIUS</td></tr>
+        <tr><td class="mono">test aaa group tacacs+ user pass legacy</td><td>Tester un couple identifiant/mot de passe contre le groupe TACACS+ sans se déconnecter</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="content-block">
+    <div class="callout attention">
+      <div class="head">⚠️ Attention avant de couper la session</div>
+      <p>Avant de valider une nouvelle configuration AAA sur les lignes <strong>vty</strong> (accès distant), garder une session déjà ouverte (ou la console) tant que la nouvelle authentification n'est pas validée — une erreur de configuration peut couper tout accès distant à l'équipement.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= A RETENIR ================= -->
+<section class="chapter" id="retenir">
+  <h2>8. À retenir — l'essentiel du cours</h2>
+  <div class="content-block">
+    <div class="callout retenir">
+      <div class="head">🧠 Les points essentiels</div>
+      <ol>
+        <li><strong>AAA</strong> = Authentication (qui es-tu) + Authorization (qu'as-tu le droit de faire) + Accounting (qu'as-tu fait).</li>
+        <li><span class="mono">aaa new-model</span> est le préalable obligatoire avant toute autre commande AAA.</li>
+        <li>Une liste de méthodes essaie chaque méthode <strong>dans l'ordre</strong>, en passant à la suivante seulement si le serveur précédent ne répond pas (pas en cas de refus).</li>
+        <li><strong>AAA locale</strong> = pas de dépendance réseau, mais pas centralisée.</li>
+        <li><strong>TACACS+</strong> (TCP/49, tout chiffré) = idéal pour l'administration des équipements, contrôle fin des commandes.</li>
+        <li><strong>RADIUS</strong> (UDP/1812-1813, mot de passe chiffré) = standard ouvert, idéal pour l'accès réseau des utilisateurs.</li>
+        <li>Toujours garder une méthode de secours <span class="mono">local</span> après un serveur externe.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="content-block">
+    <div class="keywords">
+      <span class="kw">AAA</span><span class="kw">Authentication</span><span class="kw">Authorization</span><span class="kw">Accounting</span>
+      <span class="kw">aaa new-model</span><span class="kw">method list</span><span class="kw">login authentication</span>
+      <span class="kw">username secret</span><span class="kw">TACACS+</span><span class="kw">RADIUS</span>
+      <span class="kw">TCP/49</span><span class="kw">UDP/1812-1813</span><span class="kw">group tacacs+</span><span class="kw">group radius</span>
+      <span class="kw">console</span><span class="kw">vty</span><span class="kw">privilege 15</span><span class="kw">debug aaa</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================= REVISION ================= -->
+<section class="chapter" id="revision">
+  <h2>9. Révision — Questions / Réponses</h2>
+  <div class="content-block"><p>Clique sur une question pour révéler la réponse.</p></div>
+  <div class="content-block" id="qaList">
+    <div class="qa"><div class="q"><span class="qn">Q1.</span> Que signifie AAA ?</div><div class="a">Authentication, Authorization, Accounting.</div></div>
+    <div class="qa"><div class="q"><span class="qn">Q2.</span> Quelle commande active le modèle AAA sur un routeur Cisco ?</div><div class="a">aaa new-model</div></div>
+    <div class="qa"><div class="q"><span class="qn">Q3.</span> Quelle est la différence entre une liste de méthodes « default » et une liste nommée ?</div><div class="a">La liste default s'applique automatiquement à toutes les lignes ; une liste nommée doit être appliquée manuellement sur chaque ligne avec « login authentication <nom> ».</div></div>
+    <div class="qa"><div class="q"><span class="qn">Q4.</span> Pourquoi toujours ajouter « local » après « group tacacs+ » dans une liste d'authentification ?</div><div class="a">Pour disposer d'une méthode de secours si le serveur TACACS+ est injoignable, et éviter de se retrouver bloqué hors de l'équipement.</div></div>
+    <div class="qa"><div class="q"><span class="qn">Q5.</span> Sur quel port et quel protocole de transport fonctionne TACACS+ ?</div><div class="a">TCP, port 49.</div></div>
+    <div class="qa"><div class="q"><span class="qn">Q6.</span> Sur quels ports fonctionne RADIUS ?</div><div class="a">UDP, ports 1812 (authentification) et 1813 (accounting).</div></div>
+    <div class="qa"><div class="q"><span class="qn">Q7.</span> Quelle est la principale différence de chiffrement entre TACACS+ et RADIUS ?</div><div class="a">TACACS+ chiffre tout le paquet ; RADIUS ne chiffre que le mot de passe.</div></div>
+    <div class="qa"><div class="q"><span class="qn">Q8.</span> Quel protocole permet de contrôler finement quelles commandes CLI un utilisateur peut exécuter ?</div><div class="a">TACACS+ (via aaa authorization commands).</div></div>
+    <div class="qa"><div class="q"><span class="qn">Q9.</span> Pourquoi utilise-t-on « username … secret … » plutôt que « username … password … » ?</div><div class="a">« secret » chiffre le mot de passe dans la configuration, contrairement à « password » qui peut le laisser en clair (ou faiblement chiffré selon le type).</div></div>
+    <div class="qa"><div class="q"><span class="qn">Q10.</span> Quel est le protocole recommandé sur les lignes vty plutôt que Telnet, et pourquoi ?</div><div class="a">SSH, car il chiffre la session alors que Telnet transmet les identifiants en clair.</div></div>
+    <div class="qa"><div class="q"><span class="qn">Q11.</span> Quel type d'usage privilégie RADIUS par rapport à TACACS+ ?</div><div class="a">L'accès réseau des utilisateurs finaux (Wi-Fi, VPN, 802.1X), alors que TACACS+ est plutôt utilisé pour l'administration des équipements réseau.</div></div>
+    <div class="qa"><div class="q"><span class="qn">Q12.</span> Que faut-il déclarer avant de créer une liste d'authentification utilisant un serveur TACACS+ ou RADIUS ?</div><div class="a">Le serveur lui-même (adresse IP et clé partagée), avec « tacacs server » ou « radius server ».</div></div>
+  </div>
+</section>
+
+<footer class="pagefoot">
+  Fiche de révision construite à partir du déroulé standard des travaux pratiques AAA sur Cisco IOS (local, TACACS+, RADIUS). Les valeurs d'adressage IP et de clés partagées sont des exemples pédagogiques — à remplacer par celles de vos propres maquettes Packet Tracer.
+</footer>
+
+</main>
+</div>
+
+<button id="backtotop" aria-label="Retour en haut">↑</button>
+
+<script>
+const themeBtn = document.getElementById('themeBtn');
+const themeLbl = document.getElementById('themeLbl');
+let dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+function applyTheme(){
+  document.documentElement.classList.toggle('dark', dark);
+  themeLbl.textContent = dark ? 'Clair' : 'Sombre';
+  themeBtn.firstChild.textContent = dark ? '☀️ ' : '🌙 ';
+}
+applyTheme();
+themeBtn.addEventListener('click', ()=>{ dark = !dark; applyTheme(); });
+
+const sidebar = document.getElementById('sidebar');
+const menuBtn = document.getElementById('menuBtn');
+menuBtn.addEventListener('click', ()=> sidebar.classList.toggle('open'));
+document.querySelectorAll('.sidebar nav a').forEach(a=>{ a.addEventListener('click', ()=> sidebar.classList.remove('open')); });
+
+const progress = document.getElementById('progress');
+const backBtn = document.getElementById('backtotop');
+const sections = Array.from(document.querySelectorAll('section.chapter'));
+const navLinks = Array.from(document.querySelectorAll('#sidenav a'));
+
+function onScroll(){
+  const h = document.documentElement;
+  const scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+  progress.style.width = scrolled + '%';
+  backBtn.classList.toggle('show', h.scrollTop > 500);
+  let currentId = sections[0] ? sections[0].id : null;
+  for(const sec of sections){ const rect = sec.getBoundingClientRect(); if(rect.top <= 90){ currentId = sec.id; } }
+  navLinks.forEach(l=> l.classList.toggle('active', l.dataset.target === currentId));
+}
+document.addEventListener('scroll', onScroll, {passive:true});
+onScroll();
+backBtn.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
+
+const searchInput = document.getElementById('searchInput');
+const searchCount = document.getElementById('searchCount');
+const blocks = Array.from(document.querySelectorAll('.content-block'));
+let searchTimer;
+
+function clearHighlights(root){
+  root.querySelectorAll('mark').forEach(m=>{ const parent = m.parentNode; parent.replaceChild(document.createTextNode(m.textContent), m); parent.normalize(); });
+}
+function highlight(el, term){
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+  const nodes = []; let n;
+  while(n = walker.nextNode()){ if(n.nodeValue.toLowerCase().includes(term)) nodes.push(n); }
+  nodes.forEach(node=>{
+    const text = node.nodeValue; const idx = text.toLowerCase().indexOf(term);
+    if(idx === -1) return;
+    const before = text.slice(0, idx); const match = text.slice(idx, idx+term.length); const after = text.slice(idx+term.length);
+    const frag = document.createDocumentFragment();
+    frag.appendChild(document.createTextNode(before));
+    const mark = document.createElement('mark'); mark.textContent = match; frag.appendChild(mark);
+    frag.appendChild(document.createTextNode(after));
+    node.parentNode.replaceChild(frag, node);
+  });
+}
+searchInput.addEventListener('input', ()=>{
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(()=>{
+    const term = searchInput.value.trim().toLowerCase();
+    blocks.forEach(b=> clearHighlights(b));
+    if(term.length < 2){ blocks.forEach(b=> b.classList.remove('hide')); searchCount.textContent=''; return; }
+    let count = 0;
+    blocks.forEach(b=>{
+      const matches = b.textContent.toLowerCase().includes(term);
+      b.classList.toggle('hide', !matches);
+      if(matches){ count++; highlight(b, term); }
+    });
+    searchCount.textContent = count + ' résultat' + (count>1?'s':'');
+  }, 150);
+});
+
+document.querySelectorAll('#qaList .qa').forEach(qa=>{ qa.addEventListener('click', ()=> qa.classList.toggle('open')); });
+</script>
+</body>
+</html>
