@@ -1,824 +1,260 @@
 <!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AAA — Authentification, Autorisation, Traçabilité — Fiche de révision</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<html lang="fr"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cours — Authentification, groupes, approbations, Kerberos</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#F5F7FA; --surface:#FFFFFF; --surface-2:#FBFCFD; --text:#152033; --muted:#5B6577;
-  --border:#E1E6ED; --accent:#2563EB; --accent-ink:#ffffff; --accent-2:#7C3AED;
-  --crit:#DC2626; --crit-bg:#FDE8E8; --elev:#EA580C; --elev-bg:#FDEAD9;
-  --moy:#B7791F; --moy-bg:#FBF0D2; --faib:#16A34A; --faib-bg:#E1F6E9;
-  --code-bg:#EEF1F5; --shadow: 0 1px 2px rgba(21,32,51,.06), 0 6px 20px rgba(21,32,51,.05);
-  --radius: 10px;
-  --hl:#9A3412; --hl-bg:#FFEDD5; --hl-border:#FDBA74; --rowline:#C7CFDA;
-  --tac:#0E7C86; --tac-bg:#E1F4F4; --rad:#7C3AED; --rad-bg:#EFE7FE; --loc:#B7791F; --loc-bg:#FBF0D2;
-}
-html.dark{
-  --bg:#0A0F1A; --surface:#111A2B; --surface-2:#0D1524; --text:#E7ECF3; --muted:#93A0B7;
-  --border:#223050; --accent:#60A5FA; --accent-ink:#06122a; --accent-2:#C4B5FD;
-  --crit:#F87171; --crit-bg:#3A1616; --elev:#FB923C; --elev-bg:#3A2410;
-  --moy:#FACC15; --moy-bg:#332B08; --faib:#4ADE80; --faib-bg:#0F2E1B;
-  --code-bg:#0F1B30; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
-  --hl:#FDBA74; --hl-bg:#3A2410; --hl-border:#7C3F13; --rowline:#3A4C74;
-  --tac:#2DD4BF; --tac-bg:#0F2E2E; --rad:#C4B5FD; --rad-bg:#241B3A; --loc:#FACC15; --loc-bg:#332B08;
-}
-*{box-sizing:border-box;}
-html{scroll-behavior:smooth;}
-body{margin:0; background:var(--bg); color:var(--text); font-family:'Inter',system-ui,sans-serif; line-height:1.6; transition:background .2s ease, color .2s ease;}
-h1,h2,h3,h4{font-family:'Manrope',sans-serif; color:var(--text); line-height:1.25; margin:0 0 .5em;}
-h1{font-weight:800;} h2{font-weight:800;} h3{font-weight:700;} h4{font-weight:700;}
-a{color:var(--accent);}
-.mono{font-family:'IBM Plex Mono',monospace;}
-p{margin:.4em 0 .9em; color:var(--text);}
-ul,ol{margin:.3em 0 1em; padding-left:1.3em;}
-li{margin:.25em 0;}
+:root{--ink:#1d2a44;--red:#d93a3a;--blue:#2457c5;--grn:#1f9d55;--org:#e8780c;--pur:#7b3fc4;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html{scroll-behavior:smooth;height:100%}
+body{margin:0;background:#fffdf5;color:var(--ink);font:18px/32px 'Patrick Hand',cursive;
+background-image:linear-gradient(#bcd7f0 1px,transparent 1px);background-size:100% 32px;background-position:0 31px}
+.page{max-width:900px;margin:0 auto;padding:10px 18px 80px 70px;border-left:3px solid #f0a0a0;position:relative;background:linear-gradient(90deg,rgba(255,253,245,.0),rgba(255,253,245,.0))}
+.page:before{content:"";position:absolute;left:14px;top:0;bottom:0;width:0;border-left:0}
+h1,h2,h3{font-family:'Caveat',cursive;line-height:1.1;margin:0}
+h1{font-size:2.8rem;color:var(--blue);margin-top:24px}
+h2{font-size:2.1rem;color:var(--red);margin-top:64px;border-bottom:3px double var(--red)}
+h3{font-size:1.5rem;color:var(--pur);margin-top:32px}
+p,li{margin:0 0 0}ul,ol{margin:0 0 32px;padding-left:24px}p{margin-bottom:32px}
+.hl{background:linear-gradient(transparent 20%,#fff176 20%,#fff176 90%,transparent 90%);padding:0 3px}
+.hg{background:linear-gradient(transparent 20%,#a5f3b5 20%,#a5f3b5 90%,transparent 90%);padding:0 3px}
+.hp{background:linear-gradient(transparent 20%,#ffb3d1 20%,#ffb3d1 90%,transparent 90%);padding:0 3px}
+.hb{background:linear-gradient(transparent 20%,#a8d8ff 20%,#a8d8ff 90%,transparent 90%);padding:0 3px}
+.u{text-decoration:underline wavy var(--red);text-underline-offset:5px}
+.u2{border-bottom:3px solid var(--blue)}
+b{color:var(--red)}code{font-family:monospace;background:#fff;border:1px dashed #999;padding:0 5px;font-size:.85em;color:#a1275f}
+.src{font-family:monospace;font-size:.62em;background:#e9e4ff;color:#4b2d9b;border-radius:6px;padding:1px 6px;vertical-align:middle;white-space:nowrap}
+.box{border:2.5px solid;border-radius:6px 18px 8px 16px;padding:14px 18px 2px;margin:0 0 32px;background:rgba(255,255,255,.85);position:relative}
+.box>.t{font-family:'Caveat';font-size:1.45rem;font-weight:700;margin-bottom:0}
+.def{border-color:var(--blue)}.def>.t{color:var(--blue)}
+.imp{border-color:var(--red);background:#fff1f1}.imp>.t{color:var(--red)}
+.ast{border-color:var(--grn);background:#effaf2}.ast>.t{color:var(--grn)}
+.pie{border-color:var(--org);background:#fff6e8}.pie>.t{color:var(--org)}
+.note{display:block;background:#fff59d;transform:rotate(-1deg);box-shadow:3px 4px 8px rgba(0,0,0,.2);padding:12px 16px 2px;margin:0 0 32px;max-width:560px;border-radius:2px}
+.step{counter-increment:s;position:relative;padding-left:46px;margin-bottom:32px}
+.step:before{content:counter(s);position:absolute;left:0;top:2px;width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;text-align:center;line-height:32px;font-family:'Caveat';font-size:1.4rem}
+.steps{counter-reset:s}
+table{border-collapse:collapse;width:100%;background:rgba(255,255,255,.92);margin:0 0 32px;font-size:.92em;line-height:24px}
+th{background:#ffe08a;border:2px solid var(--ink);padding:5px 8px;font-family:'Caveat';font-size:1.25rem}
+td{border:1.5px solid var(--ink);padding:5px 8px;vertical-align:top}
+.wrap{overflow-x:auto}
+nav{position:sticky;top:0;z-index:5;background:#fff8c9;border-bottom:2px solid var(--ink);padding:6px 10px;font-family:'Caveat';font-size:1.25rem;line-height:1.3;display:flex;flex-wrap:wrap;gap:4px 16px;padding-top:calc(6px + env(safe-area-inset-top,0px))}
+nav a{color:var(--blue);text-decoration:none}nav a:hover{background:#ffee58}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:32px;line-height:24px}
+.flow span{border:2px solid var(--ink);background:#fff;border-radius:10px;padding:4px 10px}.flow i{font-style:normal;color:var(--red);font-size:1.4em}
+details{background:#fff;border:2px dashed var(--pur);border-radius:8px;padding:4px 14px;margin-bottom:32px}summary{cursor:pointer;color:var(--pur);font-family:'Caveat';font-size:1.35rem}
+@media(max-width:600px){.page{padding-left:40px;padding-right:10px}body{font-size:17px}h1{font-size:2.2rem}}
 
-#progress{position:fixed; top:0; left:0; height:3px; background:var(--accent); z-index:1000; width:0%; transition:width .1s linear;}
-
-.topbar{position:sticky; top:0; z-index:900; display:flex; align-items:center; gap:12px; padding:10px 16px; background:color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter:blur(8px); border-bottom:1px solid var(--border);}
-.topbar .brand{display:flex; align-items:center; gap:8px; font-family:'Manrope'; font-weight:800; font-size:.95rem; white-space:nowrap;}
-.topbar .brand .dot{width:9px; height:9px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);}
-.menu-btn{display:none; background:none; border:1px solid var(--border); border-radius:8px; color:var(--text); width:36px; height:36px; cursor:pointer; font-size:1.1rem;}
-.searchwrap{flex:1; max-width:520px; position:relative;}
-.searchwrap input{width:100%; padding:9px 34px 9px 34px; border-radius:999px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-size:.9rem; outline:none;}
-.searchwrap input:focus{border-color:var(--accent);}
-.searchwrap .icon{position:absolute; left:12px; top:50%; transform:translateY(-50%); opacity:.5; font-size:.85rem;}
-.searchwrap .count{position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:.72rem; color:var(--muted);}
-.theme-btn{margin-left:auto; background:none; border:1px solid var(--border); border-radius:999px; color:var(--text); padding:8px 14px; cursor:pointer; font-size:.85rem; display:flex; gap:6px; align-items:center; white-space:nowrap;}
-.theme-btn:hover{border-color:var(--accent);}
-
-.layout{display:flex; max-width:1400px; margin:0 auto;}
-.sidebar{width:270px; flex-shrink:0; position:sticky; top:57px; align-self:flex-start; height:calc(100vh - 57px); overflow-y:auto; padding:20px 12px 60px 20px; border-right:1px solid var(--border);}
-.sidebar nav a{display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--muted); font-size:.87rem; padding:7px 10px; border-radius:8px; margin-bottom:2px; font-weight:600;}
-.sidebar nav a:hover{background:var(--surface-2); color:var(--text);}
-.sidebar nav a.active{background:color-mix(in srgb, var(--accent) 14%, transparent); color:var(--accent);}
-.sidebar .group-title{font-size:.68rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:18px 0 6px 10px; font-weight:700;}
-.sidebar .group-title:first-child{margin-top:0;}
-
-main{flex:1; min-width:0; padding:28px 34px 100px;}
-@media (max-width:980px){
-  .sidebar{position:fixed; left:-290px; top:57px; height:calc(100vh - 57px); width:270px; background:var(--bg); z-index:800; transition:left .2s ease; box-shadow:var(--shadow);}
-  .sidebar.open{left:0;}
-  .menu-btn{display:block;}
-  main{padding:20px 16px 90px;}
-  .topbar .brand span.full{display:none;}
-}
-
-.hero{background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--surface)), var(--surface)); border:1px solid var(--border); border-radius:16px; padding:34px 30px; margin-bottom:28px;}
-.hero .eyebrow{font-family:'IBM Plex Mono'; font-size:.75rem; color:var(--accent); font-weight:600;}
-.hero h1{font-size:1.9rem; max-width:820px; margin-top:.3em;}
-.hero p.lead{max-width:680px; color:var(--muted); font-size:1rem;}
-.stat-row{display:flex; gap:14px; flex-wrap:wrap; margin-top:20px;}
-.stat{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 18px; min-width:130px;}
-.stat .num{font-family:'Manrope'; font-weight:800; font-size:1.5rem; color:var(--accent);}
-.stat .lbl{font-size:.78rem; color:var(--muted);}
-.card-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px; margin:20px 0 8px;}
-.nav-card{display:block; text-decoration:none; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; color:var(--text); transition:transform .12s ease, border-color .12s ease;}
-.nav-card:hover{transform:translateY(-2px); border-color:var(--accent);}
-.nav-card .tag{font-family:'IBM Plex Mono'; font-size:.68rem; color:var(--accent); font-weight:600;}
-.nav-card h3{font-size:1rem; margin:.35em 0 .2em;}
-.nav-card p{font-size:.82rem; color:var(--muted); margin:0;}
-
-section.chapter{padding-top:10px; margin-bottom:10px; scroll-margin-top:70px;}
-.chapter > h2{font-size:1.55rem; border-bottom:2px solid var(--border); padding-bottom:.35em; margin-bottom:.6em;}
-h3.part{font-size:1.18rem; margin-top:1.6em; color:var(--accent-2); scroll-margin-top:70px;}
-h4.subpart{font-size:1rem; margin-top:1.1em; scroll-margin-top:70px;}
-.content-block{margin-bottom:14px;}
-.content-block.hide{display:none;}
-mark{background:color-mix(in srgb, var(--accent) 45%, transparent); color:inherit; border-radius:3px; padding:0 2px;}
-
-.callout{border-radius:10px; padding:14px 16px; margin:14px 0; border:1px solid var(--border); background:var(--surface);}
-.callout .head{font-weight:700; font-size:.85rem; display:flex; gap:8px; align-items:center; margin-bottom:4px;}
-.callout p, .callout ul{margin:.2em 0;}
-.callout.retenir{border-left:4px solid var(--accent);}
-.callout.attention{border-left:4px solid var(--elev);}
-.callout.astuce{border-left:4px solid var(--accent-2);}
-.callout.exemple{border-left:4px solid var(--muted); background:var(--surface-2);}
-.callout.def{border-left:4px solid #7C3AED;}
-
-.terme{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin:12px 0;}
-.terme .t{font-family:'IBM Plex Mono'; font-weight:600; font-size:.85rem; color:var(--accent-2);}
-
-.tablewrap{overflow-x:auto; background:var(--surface); border:2px solid var(--accent); border-radius:12px; padding:14px 14px 6px; margin:16px 0; box-shadow:var(--shadow);}
-.tablewrap table{margin:0 0 8px;}
-table{width:100%; border-collapse:collapse; font-size:.87rem; background:transparent;}
-caption{caption-side:top; text-align:left; font-family:'IBM Plex Mono'; font-size:.78rem; font-weight:700; color:var(--hl); background:var(--hl-bg); border:1px solid var(--hl-border); padding:7px 14px; margin:2px 0 14px; border-radius:8px;}
-caption::before{content:'📋 ';}
-th,td{padding:11px 13px; border-bottom:1.5px solid var(--rowline); text-align:left; vertical-align:top;}
-th{background:var(--accent); font-family:'Manrope'; font-weight:800; font-size:.8rem; color:var(--accent-ink); letter-spacing:.01em; border-bottom:1.5px solid var(--accent);}
-tbody tr:nth-child(even) td{background:var(--surface-2);}
-tr:last-child td{border-bottom:none;}
-td.id{font-family:'IBM Plex Mono'; font-weight:600; color:var(--accent);}
-
-.lvl{display:inline-block; padding:2px 10px; border-radius:999px; font-size:.76rem; font-weight:700; white-space:nowrap;}
-.lvl.local{background:var(--loc-bg); color:var(--loc);}
-.lvl.tacacs{background:var(--tac-bg); color:var(--tac);}
-.lvl.radius{background:var(--rad-bg); color:var(--rad);}
-.lvl.ok{background:var(--faib-bg); color:var(--faib);}
-.lvl.no{background:var(--crit-bg); color:var(--crit);}
-
-details.step{background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--hl-border); border-radius:12px; margin:10px 0; overflow:hidden;}
-details.step summary{cursor:pointer; padding:13px 16px; font-family:'Manrope'; font-weight:800; font-size:1rem; list-style:none; display:flex; align-items:center; gap:10px; color:var(--hl);}
-details.step summary::-webkit-details-marker{display:none;}
-details.step summary .num{font-family:'IBM Plex Mono'; font-size:.75rem; background:var(--hl-bg); color:var(--hl); border:1px solid var(--hl-border); font-weight:700; border-radius:6px; padding:3px 9px;}
-details.step summary::after{content:'+'; margin-left:auto; font-size:1.2rem; color:var(--muted);}
-details.step[open] summary::after{content:'–';}
-details.step[open]{border-left-color:var(--hl);}
-details.step .body{padding:0 18px 16px;}
-details.step[open] summary{border-bottom:1px solid var(--border); background:var(--hl-bg);}
-
-.diagram{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px; margin:14px 0; font-size:.85rem;}
-.flow{display:flex; flex-wrap:wrap; align-items:center; gap:8px; justify-content:center;}
-.flow .box{background:var(--hl-bg); border:1.5px solid var(--hl-border); color:var(--hl); border-radius:8px; padding:8px 14px; font-weight:700; font-size:.82rem; text-align:center;}
-.flow .arrow{color:var(--muted); font-size:1.1rem;}
-.flow-col{display:flex; flex-direction:column; gap:6px; align-items:center;}
-
-.keywords{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0;}
-.keywords .kw{font-family:'IBM Plex Mono'; font-size:.75rem; background:var(--code-bg); color:var(--accent); border-radius:6px; padding:4px 10px; font-weight:600;}
-
-pre.cli{background:#0B1220; color:#D6E4FF; border-radius:10px; padding:14px 16px; overflow-x:auto; font-family:'IBM Plex Mono',monospace; font-size:.82rem; line-height:1.7; margin:10px 0; border:1px solid #1E2E4D;}
-pre.cli .c{color:#7EE787;}
-pre.cli .k{color:#79C0FF;}
-pre.cli .v{color:#FFA657;}
-html.dark pre.cli{background:#050A14;}
-.cli-label{font-family:'IBM Plex Mono'; font-size:.7rem; color:var(--muted); margin:14px 0 -4px; text-transform:uppercase; letter-spacing:.05em;}
-
-blockquote.formula{font-family:'IBM Plex Mono'; background:var(--code-bg); border-left:4px solid var(--accent); padding:10px 16px; margin:12px 0; border-radius:6px; font-size:.95rem;}
-
-.qa{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 16px; margin:12px 0;}
-.qa .q{font-weight:700; font-family:'Manrope'; margin-bottom:6px; display:flex; gap:8px;}
-.qa .q .qn{font-family:'IBM Plex Mono'; color:var(--accent); font-size:.85rem;}
-.qa .a{display:none; padding-top:6px; border-top:1px dashed var(--border); margin-top:6px; color:var(--muted);}
-.qa.open .a{display:block;}
-
-#backtotop{position:fixed; bottom:22px; right:22px; width:44px; height:44px; border-radius:50%; background:var(--accent); color:var(--accent-ink); border:none; font-size:1.1rem; cursor:pointer; box-shadow:var(--shadow); display:none; align-items:center; justify-content:center; z-index:850;}
-#backtotop.show{display:flex;}
-
-.ambig{font-style:italic; color:var(--muted); font-size:.85em;}
-.note-add{border-radius:6px; background:color-mix(in srgb, var(--accent-2) 10%, transparent); padding:2px 6px; font-size:.82em;}
-footer.pagefoot{margin-top:50px; padding-top:20px; border-top:1px solid var(--border); color:var(--muted); font-size:.8rem;}
-</style>
-</head>
-<body>
-
-<div id="progress"></div>
-
-<div class="topbar">
-  <button class="menu-btn" id="menuBtn" aria-label="Menu">☰</button>
-  <div class="brand"><span class="dot"></span><span class="full">AAA — Cisco IOS</span></div>
-  <div class="searchwrap">
-    <span class="icon">🔎</span>
-    <input id="searchInput" type="text" placeholder="Rechercher une commande, une notion…">
-    <span class="count" id="searchCount"></span>
-  </div>
-  <button class="theme-btn" id="themeBtn">🌙 <span id="themeLbl">Sombre</span></button>
+.pg{display:none}.pg.on{display:block}.pg h2{margin-top:14px;font-size:1.6rem}
+pre.cli{background:#fff;border:2px solid var(--ink);border-left:6px solid var(--blue);border-radius:6px;padding:8px 12px;font:13.5px/22px monospace;color:#1d2a44;overflow-x:auto;margin:6px 0 32px;white-space:pre}
+.step pre.cli{margin-bottom:0}.k{color:#2457c5;font-weight:bold}.pr{color:#888}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:12px}.cards a{background:#fff59d;color:var(--ink);text-decoration:none;padding:8px 12px;border-radius:3px;box-shadow:2px 3px 6px rgba(0,0,0,.2);line-height:24px}.cards a:hover{background:#ffee58}
+.pager{display:flex;justify-content:space-between;gap:10px;margin-top:40px}.pager a{background:var(--blue);color:#fff;text-decoration:none;padding:4px 16px;border-radius:20px;font-family:'Caveat';font-size:1.3rem}
+nav select{font:inherit;max-width:62vw}nav .gap{flex:1}
+</style></head><body><nav><a href="#" data-go="0">📑 Sommaire</a><span class="gap"></span><select id="j"><option value="0">0. Introduction &amp; sommaire</option><option value="1">1. 1. Authentification</option><option value="2">2. 2. Groupes</option><option value="3">3. 3. Approbations</option><option value="4">4. 4. TP approbations</option><option value="5">5. 4b. TP parent/enfant &amp; GPO</option><option value="6">6. 5. Kerberos, LM, RADIUS</option><option value="7">7. 6. Mots de passe &amp; sécurité serveurs</option><option value="8">8. AAA · 1. Les 3 A</option><option value="9">9. AAA · 2. Lignes &amp; method lists</option><option value="10">10. AAA · 3. AAA locale</option><option value="11">11. AAA · 4. TACACS+ &amp; RADIUS</option><option value="12">12. AAA · 5. Comparatif</option><option value="13">13. AAA · 6. Labs Packet Tracer</option><option value="14">14. AAA · 7. Vérification &amp; dépannage</option><option value="15">15. AAA · 8. À retenir</option><option value="16">16. Révision du cours Windows</option><option value="17">17. Révision AAA</option></select></nav><div class="page"><div class="pg on" data-t="Introduction &amp; sommaire">
+<h1>✏️ Cours complet : Authentification, approbations, Kerberos & AAA</h1>
+<p>Module <b>INT0705</b> — Administration et sécurité des réseaux informatiques (BTS ASRI). Cours construit à partir de 4 sources, citées partout :</p>
+<ul>
+<li><span class="src">[PROG]</span> programme d'études (ta photo, pages 34-36) = <b>la liste de ce qui peut tomber à l'examen</b>.</li>
+<li><span class="src">[C03]</span> « Cours N°03 : approbations sous Windows Server 2012 ».</li>
+<li><span class="src">[STR]</span> « Relation d'approbation du domaine AD sur 2008 Server » (TP Les-Comores / Tsinimoichongo).</li>
+<li><span class="src">[KRB]</span> « Kerberos » (S. Gambs, 86 diapos).</li>
+<li><span class="src">[TP-ADM]</span> <span class="src">[TP-PE]</span> <span class="src">[TP-GPO]</span> <span class="src">[TP-LM]</span> tes 4 TP (parent/enfant, GPO, LAN Manager).</li><li><span class="src">[AAA]</span> ta fiche de révision <b>AAA Cisco IOS</b> (intégrée en entier, parties « AAA · 1 à 8 »).</li><li><span class="src">[+]</span> = <u>complément que j'ajoute</u>, absent des sources (à vérifier avec ton prof).</li>
+</ul>
+<div class="box imp"><div class="t">⚠️ Légende des couleurs</div>
+<p><span class="hl">Jaune</span> = mot-clé à connaître · <span class="hg">Vert</span> = commande/action · <span class="hp">Rose</span> = piège/erreur · <span class="hb">Bleu</span> = définition. Cadre <b>rouge</b> = à retenir absolument.</p></div>
+<h3>📚 Sommaire — chaque grand chapitre = une page</h3><div class="cards"><a href="#" data-go="1">1. 1. Authentification</a><a href="#" data-go="2">2. 2. Groupes</a><a href="#" data-go="3">3. 3. Approbations</a><a href="#" data-go="4">4. 4. TP approbations</a><a href="#" data-go="5">5. 4b. TP parent/enfant & GPO</a><a href="#" data-go="6">6. 5. Kerberos, LM, RADIUS</a><a href="#" data-go="7">7. 6. Mots de passe & sécurité serveurs</a><a href="#" data-go="8">8. AAA · 1. Les 3 A</a><a href="#" data-go="9">9. AAA · 2. Lignes & method lists</a><a href="#" data-go="10">10. AAA · 3. AAA locale</a><a href="#" data-go="11">11. AAA · 4. TACACS+ & RADIUS</a><a href="#" data-go="12">12. AAA · 5. Comparatif</a><a href="#" data-go="13">13. AAA · 6. Labs Packet Tracer</a><a href="#" data-go="14">14. AAA · 7. Vérification & dépannage</a><a href="#" data-go="15">15. AAA · 8. À retenir</a><a href="#" data-go="16">16. Révision du cours Windows</a><a href="#" data-go="17">17. Révision AAA</a></div><div class="pager"><span></span><a href="#" data-go="0">📑 Sommaire</a><a href="#" data-go="1">Suivant →</a></div></div><div class="pg" data-t="1. Authentification"><section><h2>1. C'est quoi l'authentification ?</h2>
+<p class="u2"><span class="src">[PROG]</span> objectif : « définir la notion d'authentification ».</p>
+<div class="box def"><div class="t">📘 Définition</div>
+<p><span class="hb">Authentification</span> = prouver <b>qui tu es</b> (login + mot de passe, ticket, certificat…). Exemple : à l'entrée d'une boîte de nuit, le videur vérifie ta carte d'identité. C'est ça.</p></div>
+<p>À ne pas confondre : <span class="hl">authentification</span> = qui es-tu ? · <span class="hl">autorisation</span> = qu'as-tu le droit de faire ? (les droits sur un dossier partagé, par ex.). L'authentification vient <u>toujours en premier</u>. <span class="src">[+]</span> (voir ta fiche AAA Cisco pour le 3ᵉ A : Accounting).</p>
+<div class="box ast"><div class="t">💡 Où ça se passe dans Windows Server ?</div>
+<p>Dans un domaine <b>Active Directory</b>, l'identité est vérifiée par le <span class="hl">contrôleur de domaine (DC)</span>. Active Directory = annuaire (LDAP) + <b>Kerberos</b> (authentification) + <b>NTP</b> (horloges synchronisées). <span class="src">[KRB p.12]</span></p></div>
+</section><div class="pager"><a href="#" data-go="0">← Précédent</a><a href="#" data-go="0">📑 Sommaire</a><a href="#" data-go="2">Suivant →</a></div></div><div class="pg" data-t="2. Groupes"><section><h2>2. Groupes et stratégie de groupes</h2>
+<p><span class="src">[PROG]</span> : « groupes de distribution, groupes de sécurité, stratégie de groupes restreints ». Idée simple : au lieu de donner des droits à 200 personnes une par une, on les met dans un <span class="hl">groupe</span> et on donne le droit <u>au groupe</u>.</p>
+<div class="wrap"><table><tr><th>Type</th><th>Sert à…</th><th>Exemple</th></tr>
+<tr><td><b>Groupe de distribution</b></td><td>Envoyer des mails à plusieurs personnes. <span class="hp">Ne donne AUCUN droit</span> d'accès.</td><td>Liste « tous-les-profs »</td></tr>
+<tr><td><b>Groupe de sécurité</b></td><td>Donner des <span class="hl">permissions</span> (dossiers, imprimantes) <u>et</u> peut aussi servir de liste mail.</td><td>Groupe « Comptables » → lecture sur \\SERVER1\compta</td></tr>
+<tr><td><b>Groupes restreints</b> (Restricted Groups)</td><td>Paramètre de GPO qui <b>impose</b> qui est membre d'un groupe (ex. Administrateurs locaux). Si quelqu'un s'ajoute à la main, la GPO le retire. <span class="src">[+]</span></td><td>Seul « Admins-IT » reste admin local des PC</td></tr></table></div>
+<div class="box ast"><div class="t">💡 Astuce mémoire</div><p>Distribution = <b>D</b>iffusion de mails. Sécurité = <b>S</b>errure (droits).</p></div>
+<p class="u2">Les 3 portées d'un groupe (<span class="src">[+]</span> notion classique AD) : <b>Locale de domaine</b> (reçoit les droits), <b>Globale</b> (regroupe des utilisateurs), <b>Universelle</b> (toute la forêt). Règle <span class="hl">AGDLP</span> : Comptes → Globaux → Domain Local → Permissions.</p>
+</section><div class="pager"><a href="#" data-go="1">← Précédent</a><a href="#" data-go="0">📑 Sommaire</a><a href="#" data-go="3">Suivant →</a></div></div><div class="pg" data-t="3. Approbations"><section><h2>3. Les relations d'approbation (trusts)</h2>
+<h3>3.1 Pourquoi ?</h3>
+<p><span class="src">[C03 §1]</span> Une entreprise a plusieurs filiales avec des domaines différents. Une <span class="hb">approbation</span> est un lien de confiance : <b>un utilisateur authentifié dans SON domaine peut accéder aux ressources d'un AUTRE domaine</b> sans créer un 2ᵉ compte. Exemple : un employé de Paris ouvre un dossier partagé de Lyon avec son compte parisien.</p>
+<h3>3.2 Les 2 propriétés à connaître par cœur</h3>
+<div class="box imp"><div class="t">⭐ Direction & Transitivité</div>
+<p><b>Direction</b> : <span class="hl">unidirectionnelle</span> (1 sens) ou <span class="hl">bidirectionnelle</span> (2 sens). <span class="src">[C03]</span></p>
+<p><b>Transitivité</b> : si A approuve B et B approuve C ⇒ A approuve C <i>automatiquement</i>. <span class="u">Comme un ami d'un ami devient ton ami.</span> <span class="src">[C03]</span></p></div>
+<svg viewBox="0 0 720 430" role="img" style="width:100%;max-width:720px;display:block;background:#fff;border:2px solid #1d2a44;border-radius:8px;margin:0 0 32px;font-family:Caveat,cursive;font-size:20px;fill:#1d2a44"><defs><marker id="m1" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8 z" fill="context-stroke"/></marker></defs><text x="215" y="30" text-anchor="middle" font-size="26" fill="#d93a3a" stroke="none">Unidirectionnelle</text><text x="565" y="30" text-anchor="middle" font-size="26" fill="#1f9d55" stroke="none">Bidirectionnelle</text><rect x="30" y="60" width="150" height="70" rx="12" fill="#e1f4ff" stroke="#1d2a44" stroke-width="2.5"/><text x="105.0" y="89.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">Domaine B</text><text x="105.0" y="113.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">📁 ressources</text><rect x="250" y="60" width="150" height="70" rx="12" fill="#e9ffe9" stroke="#1d2a44" stroke-width="2.5"/><text x="325.0" y="89.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">Domaine A</text><text x="325.0" y="113.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">👤 utilisateurs</text><line x1="180" y1="95" x2="250" y2="95" stroke="#d93a3a" stroke-width="3" marker-end="url(#m1)"/><text x="215" y="84" text-anchor="middle" font-size="17" fill="#d93a3a" stroke="none">approuve</text><path d="M325 130 L325 175 L105 175 L105 132" fill="none" stroke="#1f9d55" stroke-width="3" stroke-dasharray="7 5" marker-end="url(#m1)"/><text x="215" y="203" text-anchor="middle" font-size="18" fill="#1f9d55" stroke="none">les users de A accèdent aux ressources de B</text><text x="215" y="230" text-anchor="middle" font-size="20" fill="#d93a3a" stroke="none">mais PAS l'inverse ❌</text><rect x="440" y="60" width="120" height="70" rx="12" fill="#e9ffe9" stroke="#1d2a44" stroke-width="2.5"/><text x="500.0" y="101.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">Domaine 1</text><rect x="590" y="60" width="120" height="70" rx="12" fill="#e1f4ff" stroke="#1d2a44" stroke-width="2.5"/><text x="650.0" y="101.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">Domaine 2</text><line x1="560" y1="95" x2="590" y2="95" stroke="#1f9d55" stroke-width="3" marker-end="url(#m1)" marker-start="url(#m1)"/><text x="575" y="160" text-anchor="middle" font-size="18" fill="#1f9d55" stroke="none">chacun accède aux</text><text x="575" y="182" text-anchor="middle" font-size="18" fill="#1f9d55" stroke="none">ressources de l'autre ✅</text><text x="360" y="262" text-anchor="middle" font-size="24" fill="#2457c5" stroke="none">Transitivité : A approuve B, B approuve C ⇒ A approuve C</text><rect x="40" y="335" width="120" height="56" rx="12" fill="#fff59d" stroke="#1d2a44" stroke-width="2.5"/><text x="100.0" y="369.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">Domaine A</text><rect x="300" y="335" width="120" height="56" rx="12" fill="#fff59d" stroke="#1d2a44" stroke-width="2.5"/><text x="360.0" y="369.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">Domaine B</text><rect x="560" y="335" width="120" height="56" rx="12" fill="#fff59d" stroke="#1d2a44" stroke-width="2.5"/><text x="620.0" y="369.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">Domaine C</text><line x1="160" y1="363" x2="300" y2="363" stroke="#2457c5" stroke-width="3" marker-end="url(#m1)" marker-start="url(#m1)"/><line x1="420" y1="363" x2="560" y2="363" stroke="#2457c5" stroke-width="3" marker-end="url(#m1)" marker-start="url(#m1)"/><path d="M100 335 Q360 255 620 335" fill="none" stroke="#e0509a" stroke-width="3" stroke-dasharray="7 5" marker-end="url(#m1)"/><text x="360" y="300" text-anchor="middle" font-size="21" fill="#e0509a" stroke="none">donc A approuve C aussi !</text></svg><div class="box pie"><div class="t">🪤 Le piège du sens (le plus fréquent !)</div>
+<p>Règle simple : l'approbation <b>sortante</b> (outgoing) = « <span class="hl">MOI j'approuve l'autre</span> » ⇒ les utilisateurs <u>de l'autre</u> viennent chez moi. L'approbation <b>entrante</b> (incoming) = « l'autre m'approuve » ⇒ <u>mes</u> utilisateurs vont chez lui. Les deux se créent <u>des deux côtés</u> : entrante d'un côté ⇒ sortante de l'autre. <span class="src">[C03 : écran « Sides of Trust »]</span></p>
+<p>Exemple [C03] : sur utopia.net on choisit « One-way: incoming » car <i>nos</i> utilisateurs doivent s'authentifier dans supinfo.lan.</p></div>
+<h3>3.3 Les 4 types d'approbation</h3><svg viewBox="0 0 760 450" role="img" style="width:100%;max-width:760px;display:block;background:#fff;border:2px solid #1d2a44;border-radius:8px;margin:0 0 32px;font-family:Caveat,cursive;font-size:20px;fill:#1d2a44"><defs><marker id="m2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8 z" fill="context-stroke"/></marker></defs><rect x="15" y="40" width="360" height="340" rx="16" fill="none" stroke="#1d2a44" stroke-width="2" stroke-dasharray="9 6"/><rect x="395" y="40" width="350" height="340" rx="16" fill="none" stroke="#1d2a44" stroke-width="2" stroke-dasharray="9 6"/><text x="195" y="28" text-anchor="middle" font-size="22" fill="#1d2a44" stroke="none">Forêt 1 : supinfo.lan</text><text x="570" y="28" text-anchor="middle" font-size="22" fill="#1d2a44" stroke="none">Forêt 2 : utopia.net</text><rect x="125" y="70" width="150" height="46" rx="12" fill="#ffe08a" stroke="#1d2a44" stroke-width="2.5"/><text x="200.0" y="99.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">supinfo.lan</text><rect x="30" y="220" width="150" height="46" rx="12" fill="#fff59d" stroke="#1d2a44" stroke-width="2.5"/><text x="105.0" y="249.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">lyon.supinfo.lan</text><rect x="215" y="220" width="150" height="46" rx="12" fill="#fff59d" stroke="#1d2a44" stroke-width="2.5"/><text x="290.0" y="249.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">paris.supinfo.lan</text><rect x="495" y="70" width="150" height="46" rx="12" fill="#ffe08a" stroke="#1d2a44" stroke-width="2.5"/><text x="570.0" y="99.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">utopia.net</text><rect x="410" y="220" width="150" height="46" rx="12" fill="#fff59d" stroke="#1d2a44" stroke-width="2.5"/><text x="485.0" y="249.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">lyon.utopia.net</text><rect x="580" y="220" width="150" height="46" rx="12" fill="#fff59d" stroke="#1d2a44" stroke-width="2.5"/><text x="655.0" y="249.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">la.utopia.net</text><line x1="170" y1="116" x2="105" y2="220" stroke="#2457c5" stroke-width="3" marker-end="url(#m2)" marker-start="url(#m2)"/><line x1="230" y1="116" x2="290" y2="220" stroke="#2457c5" stroke-width="3" marker-end="url(#m2)" marker-start="url(#m2)"/><line x1="570" y1="116" x2="485" y2="220" stroke="#2457c5" stroke-width="3" marker-end="url(#m2)" marker-start="url(#m2)"/><line x1="570" y1="116" x2="655" y2="220" stroke="#2457c5" stroke-width="3" marker-end="url(#m2)" marker-start="url(#m2)"/><line x1="275" y1="93" x2="495" y2="93" stroke="#1f9d55" stroke-width="3" marker-end="url(#m2)" marker-start="url(#m2)"/><text x="385" y="80" text-anchor="middle" font-size="18" fill="#1f9d55" stroke="none">FORÊT</text><path d="M290 266 Q490 175 655 220" fill="none" stroke="#e8780c" stroke-width="3" stroke-dasharray="7 5" marker-end="url(#m2)" marker-start="url(#m2)"/><text x="470" y="170" text-anchor="middle" font-size="18" fill="#e8780c" stroke="none">EXTERNE (non transitive)</text><path d="M105 266 Q300 360 485 266" fill="none" stroke="#e0509a" stroke-width="3" marker-end="url(#m2)" marker-start="url(#m2)"/><text x="300" y="350" text-anchor="middle" font-size="18" fill="#e0509a" stroke="none">RACCOURCIE (gagne du temps)</text><text x="380" y="415" text-anchor="middle" font-size="16" fill="#1d2a44" stroke="none">🔵 parent/enfant (auto)   🟢 forêt (racine↔racine)   🟠 externe (1 domaine↔1 domaine)   🩷 raccourcie (manuelle)</text></svg>
+<div class="wrap"><table><tr><th>Type</th><th>Comment elle naît</th><th>Sens / Transitive</th><th>À quoi ça sert</th></tr>
+<tr><td><b>Prédéfinie : parent/enfant</b></td><td>Automatique quand on ajoute un domaine enfant (ex. lyon.supinfo.lan sous supinfo.lan)</td><td>Bidirectionnelle + transitive</td><td>Relier les domaines d'une même arborescence</td></tr>
+<tr><td><b>Prédéfinie : arborescence</b> (tree-root)</td><td>Automatique entre la racine d'une nouvelle arborescence et la racine de la forêt (ex. deciplex.lan)</td><td>Bidirectionnelle + transitive</td><td>Ajouter une « sous-forêt »</td></tr>
+<tr><td><b>Raccourcie</b> (shortcut)</td><td><u>Manuelle</u></td><td>Transitive</td><td>Gagner du temps : sans elle, l'authentification parcourt toute la chaîne de domaines (lent). Ex. lyon.supinfo.lan ↔ lyon.utopia.net en direct</td></tr>
+<tr><td><b>Externe</b></td><td>Manuelle, vers un domaine <b>hors forêt</b></td><td>uni ou bi · <span class="hp">NON transitive</span></td><td>Migrations d'utilisateurs, accès à <u>un seul domaine</u> d'une autre forêt (pas toute la forêt)</td></tr>
+<tr><td><b>Forêt</b></td><td>Manuelle, entre les <b>2 racines de forêt</b></td><td>uni ou bi · <span class="hg">Transitive</span></td><td>Tous les domaines d'une forêt approuvent tous ceux de l'autre via UN seul lien. Exige le niveau fonctionnel 2003+/2008 <span class="src">[STR §4.2]</span></td></tr></table></div>
+<p class="u2"><span class="src">[+]</span> Aussi mentionnés par l'assistant [C03 p.6] : approbation avec un domaine <b>Windows NT 4.0</b> ou un <b>royaume Kerberos V5</b> (Unix/MIT) — non transitive.</p>
+<div class="box imp"><div class="t">⭐ Externe vs Forêt en 10 secondes</div>
+<p>Externe = <b>1 domaine ↔ 1 domaine</b>, pas de transitivité. Forêt = <b>racine ↔ racine</b>, transitive pour toute la forêt.</p></div>
+</section><div class="pager"><a href="#" data-go="2">← Précédent</a><a href="#" data-go="0">📑 Sommaire</a><a href="#" data-go="4">Suivant →</a></div></div><div class="pg" data-t="4. TP approbations"><section><h2>4. TP pas à pas (comme pour un débutant complet)</h2>
+<h3>4.A Créer une approbation FORÊT unidirectionnelle <span class="src">[C03 §3]</span></h3>
+<p>Situation : forêts <code>supinfo.lan</code> et <code>utopia.net</code>. On veut que les utilisateurs de <b>utopia.net</b> accèdent aux ressources de <b>supinfo.lan</b>. On travaille sur le serveur de <b>utopia.net</b>.</p>
+<div class="steps">
+<div class="step"><span class="hg">Gestionnaire de serveur → Tools → Active Directory Domains and Trusts</span> (« Domaines et approbations Active Directory »).</div>
+<div class="step">Clic droit sur <code>utopia.net</code> → <b>Properties</b> → onglet <b>Trusts</b> → bouton <b>New Trust…</b> puis <b>Next</b>.</div>
+<div class="step"><b>Name</b> : tape le domaine <u>auquel on veut accéder</u> : <code>supinfo.lan</code> (nom DNS obligatoire pour une forêt).</div>
+<div class="step"><b>Trust Type</b> : coche <span class="hl">Forest trust</span>.</div>
+<div class="step"><b>Direction</b> : <span class="hl">One-way: incoming</span> (nos utilisateurs s'authentifient là-bas).</div>
+<div class="step"><b>Sides of Trust</b> : <span class="hl">Both this domain and the specified domain</span> = crée aussi le côté sortant chez supinfo.lan, sans y aller. <span class="hp">Il faut alors un compte admin de supinfo.lan.</span></div>
+<div class="step">Saisis <code>Administrator</code> + mot de passe <u>de supinfo.lan</u>.</div>
+<div class="step"><b>Outgoing Trust Authentication Level</b> : <span class="hl">Forest-wide authentication</span> (toutes les ressources, conseillé si même organisation) ou <span class="hl">Selective authentication</span> (rien n'est autorisé automatiquement, on donne l'accès serveur par serveur : conseillé si organisations différentes).</div>
+<div class="step">Récapitulatif (Direction incoming, Forest trust, Transitive : Yes) → Next. <b>Confirm incoming trust</b> → « No, do not confirm » → Next → <b>Finish</b>.</div>
+<div class="step"><b>Valider</b> : sur supinfo.lan → Properties → Trusts → sélectionne l'approbation → Properties → <span class="hg">Validate</span>. Message attendu : « The trust has been validated. It is in place and active. »</div>
 </div>
-
-<div class="layout">
-<aside class="sidebar" id="sidebar">
-  <nav id="sidenav">
-    <a href="#accueil" data-target="accueil">🏠 Accueil</a>
-
-    <div class="group-title">Théorie</div>
-    <a href="#theorie" data-target="theorie">📘 Les 3 A de l'AAA</a>
-    <a href="#lignes" data-target="lignes">🔌 Lignes & method lists</a>
-
-    <div class="group-title">Pratique — AAA locale</div>
-    <a href="#local" data-target="local">🖥️ AAA locale (console &amp; vty)</a>
-
-    <div class="group-title">Pratique — AAA serveur</div>
-    <a href="#serveur" data-target="serveur">🛰️ TACACS+ &amp; RADIUS (console)</a>
-
-    <div class="group-title">Synthèse</div>
-    <a href="#comparaison" data-target="comparaison">⚖️ Comparatif Local / TACACS+ / RADIUS</a>
-    <a href="#labs" data-target="labs">🧪 Récap des 3 labs Packet Tracer</a>
-    <a href="#debug" data-target="debug">🩺 Vérification &amp; dépannage</a>
-    <a href="#retenir" data-target="retenir">🧠 À retenir</a>
-    <a href="#revision" data-target="revision">❓ Révision (Q/R)</a>
-  </nav>
-</aside>
-
-<main id="mainContent">
-
-<!-- ================= ACCUEIL ================= -->
-<section class="chapter" id="accueil">
-  <div class="hero">
-    <div class="eyebrow">FICHE DE RÉVISION — SÉCURITÉ RÉSEAU (NETSEC)</div>
-    <h1>AAA — Authentification, Autorisation, Traçabilité (Accounting)</h1>
-    <p class="lead">Cette fiche couvre le contrôle d'accès administratif sur les équipements Cisco IOS : le modèle <strong>AAA</strong>, l'<strong>AAA locale</strong> (console et lignes vty) et l'<strong>AAA basée serveur</strong> avec <strong>TACACS+</strong> et <strong>RADIUS</strong>, avec toutes les commandes et le récapitulatif des 3 travaux pratiques (Packet Tracer).</p>
-    <div class="stat-row">
-      <div class="stat"><div class="num">3</div><div class="lbl">A : Authentication, Authorization, Accounting</div></div>
-      <div class="stat"><div class="num">3</div><div class="lbl">modes d'AAA (local, TACACS+, RADIUS)</div></div>
-      <div class="stat"><div class="num">3</div><div class="lbl">labs Packet Tracer récapitulés</div></div>
-      <div class="stat"><div class="num">1</div><div class="lbl">tableau comparatif final</div></div>
-    </div>
-  </div>
-
-  <h2 style="border:none; font-size:1.2rem;">Navigation rapide</h2>
-  <div class="card-grid">
-    <a class="nav-card" href="#theorie"><div class="tag">TH. 1</div><h3>Les 3 A de l'AAA</h3><p>Authentication, Authorization, Accounting — définitions et rôle.</p></a>
-    <a class="nav-card" href="#lignes"><div class="tag">TH. 2</div><h3>Lignes & method lists</h3><p>Console, VTY, AUX ; listes de méthodes par défaut ou nommées.</p></a>
-    <a class="nav-card" href="#local"><div class="tag">TP. 1</div><h3>AAA locale</h3><p>Base d'utilisateurs locale, console et vty — commandes pas à pas.</p></a>
-    <a class="nav-card" href="#serveur"><div class="tag">TP. 2</div><h3>TACACS+ & RADIUS</h3><p>AAA centralisée sur serveur externe, console — commandes pas à pas.</p></a>
-    <a class="nav-card" href="#comparaison"><div class="tag">SYNTHÈSE</div><h3>Comparer les 3 méthodes</h3><p>Protocole, port, chiffrement, granularité, cas d'usage.</p></a>
-    <a class="nav-card" href="#labs"><div class="tag">LABS</div><h3>Récap des 3 topologies</h3><p>Objectifs, plan d'adressage type, commandes clés, vérification.</p></a>
-    <a class="nav-card" href="#debug"><div class="tag">DÉPANNAGE</div><h3>Vérification & debug</h3><p>show, debug, test aaa — pour valider une config AAA.</p></a>
-    <a class="nav-card" href="#revision"><div class="tag">RÉVISION</div><h3>Questions / Réponses</h3><p>Auto-évaluation sur les commandes et les concepts AAA.</p></a>
-  </div>
-
-  <div class="content-block">
-    <div class="callout attention">
-      <div class="head">⚠️ Remarque sur la source</div>
-      <p>Les fichiers Packet Tracer (<span class="mono">.pkt</span>) fournis sont dans un format chiffré propriétaire : leur contenu exact (topologie, adressage IP, configs déjà en place) n'a pas pu être extrait automatiquement. Cette fiche reprend donc le déroulé <strong>standard</strong> de ces 3 travaux pratiques (AAA — vue d'ensemble, AAA locale console/vty, AAA serveur TACACS+/RADIUS console) avec les commandes Cisco IOS de référence. Remplacez les adresses IP, noms d'hôtes et secrets d'exemple par ceux de vos propres maquettes.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ================= CHAPITRE 1 : THEORIE ================= -->
-<section class="chapter" id="theorie">
-  <h2>1. Les 3 A de l'AAA</h2>
-
-  <div class="content-block">
-    <div class="terme">
-      <div class="t">📌 Définition — AAA</div>
-      <p><strong>AAA</strong> est un cadre (framework) de sécurité utilisé sur les équipements réseau (routeurs, switches, pare-feux) pour <strong>contrôler qui peut accéder à l'équipement, ce qu'il a le droit d'y faire, et garder une trace de ce qu'il y a fait</strong>. AAA signifie :</p>
-      <ul>
-        <li><strong>Authentication</strong> (Authentification) — Qui es-tu ?</li>
-        <li><strong>Authorization</strong> (Autorisation) — Qu'as-tu le droit de faire ?</li>
-        <li><strong>Accounting</strong> (Traçabilité / comptabilité) — Qu'as-tu fait, et quand ?</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="content-block tablewrap">
-    <table>
-      <caption>Les 3 A en détail</caption>
-      <thead><tr><th>Composant</th><th>Question posée</th><th>Ce qu'il contrôle</th><th>Exemple concret</th></tr></thead>
-      <tbody>
-        <tr><td><strong>Authentication</strong></td><td>Qui es-tu ?</td><td>Vérifie l'identité (identifiant + mot de passe, certificat, clé…)</td><td>Login sur la console d'un routeur</td></tr>
-        <tr><td><strong>Authorization</strong></td><td>Qu'as-tu le droit de faire ?</td><td>Détermine les commandes / ressources autorisées une fois authentifié</td><td>Un technicien n'a accès qu'aux commandes de niveau 1, un admin au niveau 15</td></tr>
-        <tr><td><strong>Accounting</strong></td><td>Qu'as-tu fait ?</td><td>Journalise les connexions, la durée, les commandes exécutées</td><td>Log : « admin1 connecté à 10h02, a tapé "reload" à 10h15 »</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="content-block">
-    <div class="callout astuce">
-      <div class="head">💡 Astuce pour mémoriser l'ordre</div>
-      <p>Les 3 A s'exécutent toujours dans cet ordre logique : on <strong>vérifie l'identité</strong> (Authentication) → puis on <strong>vérifie les droits</strong> (Authorization) → puis on <strong>enregistre l'activité</strong> (Accounting). On ne peut pas autoriser quelqu'un qu'on n'a pas encore authentifié.</p>
-    </div>
-  </div>
-
-  <h3 class="part">1.1 Pourquoi mettre en place l'AAA ?</h3>
-  <div class="content-block">
-    <p>Sans AAA, un équipement Cisco n'a par défaut qu'un simple <strong>mot de passe de ligne</strong> (line password), identique pour tout le monde, sans nom d'utilisateur, sans journalisation et sans distinction des droits. L'AAA apporte :</p>
-    <ul>
-      <li>Un <strong>identifiant individuel</strong> par administrateur (traçabilité nominative).</li>
-      <li>Une <strong>gestion centralisée</strong> possible (un seul serveur pour tous les équipements du réseau).</li>
-      <li>Un <strong>contrôle fin des droits</strong> (qui peut taper quelles commandes).</li>
-      <li>Une <strong>journalisation</strong> de toutes les actions, utile pour les audits de sécurité.</li>
-      <li>Un <strong>mécanisme de secours</strong> (fallback) si le serveur d'authentification est injoignable.</li>
-    </ul>
-  </div>
-
-  <h3 class="part">1.2 Deux grands modes de mise en œuvre</h3>
-  <div class="content-block tablewrap">
-    <table>
-      <caption>AAA locale vs AAA basée serveur</caption>
-      <thead><tr><th>Mode</th><th>Où sont stockés les comptes ?</th><th>Avantage principal</th><th>Limite principale</th></tr></thead>
-      <tbody>
-        <tr><td><span class="lvl local">AAA locale</span></td><td>Directement dans la configuration de l'équipement (<span class="mono">username</span>)</td><td>Fonctionne même sans réseau / serveur disponible</td><td>Pas centralisé : à recréer sur chaque équipement</td></tr>
-        <tr><td><span class="lvl tacacs">AAA serveur — TACACS+</span></td><td>Sur un serveur AAA externe (Cisco ACS, ISE, tac_plus…)</td><td>Contrôle très fin des commandes autorisées (device administration)</td><td>Dépend de la disponibilité du serveur et du réseau</td></tr>
-        <tr><td><span class="lvl radius">AAA serveur — RADIUS</span></td><td>Sur un serveur AAA externe (FreeRADIUS, Cisco ISE…)</td><td>Standard ouvert, largement utilisé pour l'accès réseau (Wi-Fi, VPN, 802.1X)</td><td>Moins granulaire pour l'autorisation des commandes CLI</td></tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<!-- ================= CHAPITRE 2 : LIGNES & METHOD LISTS ================= -->
-<section class="chapter" id="lignes">
-  <h2>2. Les lignes d'accès et les listes de méthodes (method lists)</h2>
-
-  <div class="content-block tablewrap">
-    <table>
-      <caption>Les lignes d'accès à un équipement Cisco</caption>
-      <thead><tr><th>Ligne</th><th>Commande d'entrée</th><th>Usage</th></tr></thead>
-      <tbody>
-        <tr><td><strong>Console</strong></td><td class="mono">line console 0</td><td>Accès physique direct par câble console</td></tr>
-        <tr><td><strong>VTY</strong></td><td class="mono">line vty 0 4 (ou 0 15)</td><td>Accès distant (Telnet / SSH)</td></tr>
-        <tr><td><strong>AUX</strong></td><td class="mono">line aux 0</td><td>Accès distant par modem (rarement utilisé aujourd'hui)</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="content-block">
-    <div class="terme">
-      <div class="t">📌 Définition — Liste de méthodes (method list)</div>
-      <p>Une <strong>liste de méthodes</strong> définit la <strong>séquence</strong> de méthodes d'authentification (ou d'autorisation, ou d'accounting) que le routeur doit essayer, <strong>dans l'ordre</strong>, jusqu'à ce que l'une réponde. Elle peut être :</p>
-      <ul>
-        <li><strong>default</strong> — s'applique automatiquement à toutes les lignes qui n'ont pas de liste explicite.</li>
-        <li><strong>nommée</strong> (ex. <span class="mono">CONSOLE-AUTH</span>) — doit être appliquée manuellement sur chaque ligne avec <span class="mono">login authentication &lt;nom&gt;</span>.</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="content-block">
-    <blockquote class="formula">aaa authentication login {default | NOM-LISTE} méthode1 [méthode2] [méthode3] …</blockquote>
-    <p>Le routeur essaie <strong>méthode1</strong> ; si le serveur ne répond pas (timeout), il passe à <strong>méthode2</strong>, etc. Si une méthode répond mais refuse l'accès (mauvais mot de passe), le routeur <strong>n'essaie pas la méthode suivante</strong> — l'accès est refusé.</p>
-  </div>
-
-  <div class="content-block tablewrap">
-    <table>
-      <caption>Mots-clés de méthode les plus utilisés</caption>
-      <thead><tr><th>Mot-clé</th><th>Signification</th></tr></thead>
-      <tbody>
-        <tr><td class="mono">local</td><td>Utiliser la base d'utilisateurs locale (<span class="mono">username</span>)</td></tr>
-        <tr><td class="mono">group tacacs+</td><td>Utiliser le(s) serveur(s) TACACS+ déclaré(s)</td></tr>
-        <tr><td class="mono">group radius</td><td>Utiliser le(s) serveur(s) RADIUS déclaré(s)</td></tr>
-        <tr><td class="mono">group NOM-GROUPE</td><td>Utiliser un groupe de serveurs personnalisé (sous-ensemble de serveurs)</td></tr>
-        <tr><td class="mono">enable</td><td>Utiliser le mot de passe enable comme méthode de secours</td></tr>
-        <tr><td class="mono">none</td><td>Autoriser l'accès sans authentification (à éviter, sauf test)</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="content-block">
-    <div class="callout attention">
-      <div class="head">⚠️ Erreur fréquente</div>
-      <p>Si l'on crée une liste de méthodes <strong>nommée</strong> (pas <span class="mono">default</span>) mais qu'on oublie de l'appliquer sur la ligne avec <span class="mono">login authentication &lt;nom&gt;</span>, la ligne continue d'utiliser l'ancien mode (mot de passe simple ou aucune authentification) : la liste créée n'a alors <strong>aucun effet</strong>.</p>
-    </div>
-    <div class="callout astuce">
-      <div class="head">💡 Astuce</div>
-      <p>Toujours prévoir une méthode de secours (<span class="mono">local</span> ou <span class="mono">enable</span>) après <span class="mono">group tacacs+</span> ou <span class="mono">group radius</span>, pour ne pas se retrouver bloqué hors de l'équipement si le serveur AAA tombe en panne.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ================= CHAPITRE 3 : AAA LOCALE ================= -->
-<section class="chapter" id="local">
-  <h2>3. AAA locale — console et lignes vty</h2>
-  <div class="content-block">
-    <p>Correspond au TP <strong>« AAA locale console &amp; vty »</strong>. La base des utilisateurs est stockée <strong>directement dans la configuration du routeur ou du switch</strong>, sans serveur externe.</p>
-  </div>
-
-  <div class="content-block tablewrap">
-    <table>
-      <caption>AAA locale — avantages / inconvénients</caption>
-      <thead><tr><th></th><th>Détail</th></tr></thead>
-      <tbody>
-        <tr><td>✅ Avantages</td><td>Simple à mettre en place ; fonctionne même si le réseau ou un serveur externe est en panne ; aucune dépendance externe</td></tr>
-        <tr><td>⚠️ Inconvénients</td><td>Pas centralisé (chaque équipement a sa propre base) ; pénible à maintenir sur un grand parc ; pas de journalisation centralisée des accès</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <h3 class="part">3.1 Étapes de configuration pas à pas</h3>
-  <div class="content-block">
-    <details class="step" open>
-      <summary><span class="num">1</span> Activer le modèle AAA</summary>
-      <div class="body">
-        <p>Sans cette commande, toutes les autres commandes <span class="mono">aaa …</span> sont indisponibles.</p>
-        <pre class="cli">Router(config)# <span class="k">aaa new-model</span></pre>
-      </div>
-    </details>
-
-    <details class="step" open>
-      <summary><span class="num">2</span> Créer les comptes utilisateurs locaux</summary>
-      <div class="body">
-        <p>Le mot de passe doit être chiffré avec <span class="mono">secret</span> (jamais <span class="mono">password</span> en clair).</p>
-        <pre class="cli">Router(config)# <span class="k">username</span> admin <span class="k">privilege</span> 15 <span class="k">secret</span> Cisco12345
-Router(config)# <span class="k">username</span> technicien <span class="k">privilege</span> 1 <span class="k">secret</span> Tech12345</pre>
-      </div>
-    </details>
-
-    <details class="step" open>
-      <summary><span class="num">3</span> Créer la liste de méthodes d'authentification</summary>
-      <div class="body">
-        <p>Option A — liste <strong>default</strong> (s'applique automatiquement partout) :</p>
-        <pre class="cli">Router(config)# <span class="k">aaa authentication login</span> <span class="v">default</span> local</pre>
-        <p>Option B — liste <strong>nommée</strong> (contrôle plus fin, à appliquer manuellement) :</p>
-        <pre class="cli">Router(config)# <span class="k">aaa authentication login</span> <span class="v">CONSOLE-AUTH</span> local</pre>
-      </div>
-    </details>
-
-    <details class="step" open>
-      <summary><span class="num">4</span> Appliquer sur la ligne console</summary>
-      <div class="body">
-        <pre class="cli">Router(config)# <span class="k">line console 0</span>
-Router(config-line)# <span class="k">login authentication</span> CONSOLE-AUTH
-Router(config-line)# <span class="k">exec-timeout</span> 5 0</pre>
-        <p class="ambig">Si la liste utilisée est <span class="mono">default</span>, l'étape <span class="mono">login authentication</span> n'est pas obligatoire (elle s'applique déjà automatiquement).</p>
-      </div>
-    </details>
-
-    <details class="step" open>
-      <summary><span class="num">5</span> Appliquer sur les lignes vty (accès distant)</summary>
-      <div class="body">
-        <pre class="cli">Router(config)# <span class="k">line vty 0 4</span>
-Router(config-line)# <span class="k">login authentication</span> CONSOLE-AUTH
-Router(config-line)# <span class="k">transport input</span> ssh</pre>
-        <p class="ambig">Il est recommandé de limiter <span class="mono">transport input</span> à <span class="mono">ssh</span> uniquement (le Telnet transporte les identifiants en clair).</p>
-      </div>
-    </details>
-
-    <details class="step">
-      <summary><span class="num">6</span> Vérifier la configuration</summary>
-      <div class="body">
-        <pre class="cli">Router# <span class="k">show running-config | section line</span>
-Router# <span class="k">show running-config | include aaa|username</span></pre>
-        <p>Puis tester : se déconnecter et se reconnecter sur la console ou en SSH avec un des comptes créés — un couple identifiant/mot de passe doit désormais être demandé.</p>
-      </div>
-    </details>
-  </div>
-
-  <div class="content-block">
-    <div class="cli-label">Exemple de configuration complète — AAA locale</div>
-    <pre class="cli">Router(config)# <span class="k">aaa new-model</span>
-Router(config)# <span class="k">username</span> admin <span class="k">privilege</span> 15 <span class="k">secret</span> Cisco12345
-Router(config)# <span class="k">aaa authentication login</span> <span class="v">default</span> local
-Router(config)# <span class="k">line console 0</span>
-Router(config-line)# <span class="k">exec-timeout</span> 5 0
-Router(config-line)# <span class="k">exit</span>
-Router(config)# <span class="k">line vty 0 4</span>
-Router(config-line)# <span class="k">transport input</span> ssh
-Router(config-line)# <span class="k">exit</span></pre>
-  </div>
-
-  <div class="content-block">
-    <div class="callout retenir">
-      <div class="head">🧠 À retenir — AAA locale</div>
-      <ul>
-        <li>Toujours utiliser <span class="mono">username … secret …</span> (jamais <span class="mono">password</span> en clair).</li>
-        <li><span class="mono">aaa new-model</span> est le préalable obligatoire à toute commande AAA.</li>
-        <li>Une liste <span class="mono">default</span> s'applique automatiquement ; une liste nommée doit être appliquée avec <span class="mono">login authentication &lt;nom&gt;</span>.</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<!-- ================= CHAPITRE 4 : AAA SERVEUR ================= -->
-<section class="chapter" id="serveur">
-  <h2>4. AAA basée serveur — TACACS+ et RADIUS (ligne console)</h2>
-  <div class="content-block">
-    <p>Correspond au TP <strong>« AAA serveur TACACS+ / RADIUS console »</strong>. L'authentification (et l'autorisation, l'accounting) n'est plus vérifiée localement mais déléguée à un <strong>serveur AAA externe</strong> (Cisco ACS / ISE, tac_plus, FreeRADIUS…).</p>
-  </div>
-
-  <h3 class="part">4.1 TACACS+ vs RADIUS — les fondamentaux</h3>
-  <div class="content-block tablewrap">
-    <table>
-      <caption>TACACS+ vs RADIUS</caption>
-      <thead><tr><th>Critère</th><th><span class="lvl tacacs">TACACS+</span></th><th><span class="lvl radius">RADIUS</span></th></tr></thead>
-      <tbody>
-        <tr><td>Origine</td><td>Propriétaire Cisco</td><td>Standard ouvert (RFC 2865/2866)</td></tr>
-        <tr><td>Transport</td><td>TCP, port 49</td><td>UDP, ports 1812 (authentification) et 1813 (accounting)</td></tr>
-        <tr><td>Chiffrement</td><td>Chiffre <strong>tout le paquet</strong></td><td>Chiffre <strong>uniquement le mot de passe</strong></td></tr>
-        <tr><td>Séparation des 3 A</td><td>Authentification, autorisation et accounting <strong>séparés</strong> (contrôle très fin)</td><td>Authentification et autorisation <strong>combinées</strong> en une seule réponse</td></tr>
-        <tr><td>Autorisation par commande</td><td>✅ Possible (contrôle des commandes CLI, niveau par niveau)</td><td>❌ Non supporté nativement</td></tr>
-        <tr><td>Cas d'usage typique</td><td><strong>Administration des équipements réseau</strong> (device administration : qui a le droit de taper quelles commandes)</td><td><strong>Accès réseau des utilisateurs finaux</strong> (Wi-Fi, VPN, 802.1X)</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <h3 class="part">4.2 Configuration Cisco IOS — serveur TACACS+</h3>
-  <div class="content-block">
-    <details class="step" open>
-      <summary><span class="num">1</span> Déclarer le serveur TACACS+</summary>
-      <div class="body">
-        <pre class="cli">Router(config)# <span class="k">tacacs server</span> SRV-TACACS
-Router(config-server-tacacs)# <span class="k">address ipv4</span> 192.168.1.10
-Router(config-server-tacacs)# <span class="k">key</span> Cisco123secret
-Router(config-server-tacacs)# <span class="k">exit</span></pre>
-      </div>
-    </details>
-    <details class="step" open>
-      <summary><span class="num">2</span> (Optionnel) Regrouper le serveur dans un groupe AAA</summary>
-      <div class="body">
-        <pre class="cli">Router(config)# <span class="k">aaa group server tacacs+</span> TAC-GROUP
-Router(config-sg-tacacs+)# <span class="k">server name</span> SRV-TACACS
-Router(config-sg-tacacs+)# <span class="k">exit</span></pre>
-      </div>
-    </details>
-    <details class="step" open>
-      <summary><span class="num">3</span> Activer AAA et créer la liste d'authentification</summary>
-      <div class="body">
-        <pre class="cli">Router(config)# <span class="k">aaa new-model</span>
-Router(config)# <span class="k">aaa authentication login</span> <span class="v">default</span> group tacacs+ local</pre>
-        <p class="ambig">La méthode <span class="mono">local</span> après <span class="mono">group tacacs+</span> sert de <strong>secours</strong> si le serveur ne répond pas.</p>
-      </div>
-    </details>
-    <details class="step" open>
-      <summary><span class="num">4</span> Appliquer sur la console</summary>
-      <div class="body">
-        <pre class="cli">Router(config)# <span class="k">line console 0</span>
-Router(config-line)# <span class="k">login authentication</span> default</pre>
-      </div>
-    </details>
-    <details class="step">
-      <summary><span class="num">5</span> Autorisation et accounting (spécificités TACACS+)</summary>
-      <div class="body">
-        <pre class="cli">Router(config)# <span class="k">aaa authorization exec</span> <span class="v">default</span> group tacacs+ local
-Router(config)# <span class="k">aaa authorization commands 15</span> <span class="v">default</span> group tacacs+ local
-Router(config)# <span class="k">aaa accounting exec</span> <span class="v">default</span> start-stop group tacacs+
-Router(config)# <span class="k">aaa accounting commands 15</span> <span class="v">default</span> start-stop group tacacs+</pre>
-        <p>L'autorisation et l'accounting <strong>par commande</strong> (<span class="mono">commands 15</span>) ne fonctionnent qu'avec TACACS+.</p>
-      </div>
-    </details>
-  </div>
-
-  <h3 class="part">4.3 Configuration Cisco IOS — serveur RADIUS</h3>
-  <div class="content-block">
-    <details class="step" open>
-      <summary><span class="num">1</span> Déclarer le serveur RADIUS</summary>
-      <div class="body">
-        <pre class="cli">Router(config)# <span class="k">radius server</span> SRV-RADIUS
-Router(config-radius-server)# <span class="k">address ipv4</span> 192.168.1.20 <span class="k">auth-port</span> 1812 <span class="k">acct-port</span> 1813
-Router(config-radius-server)# <span class="k">key</span> testing123
-Router(config-radius-server)# <span class="k">exit</span></pre>
-      </div>
-    </details>
-    <details class="step" open>
-      <summary><span class="num">2</span> Activer AAA et créer la liste d'authentification</summary>
-      <div class="body">
-        <pre class="cli">Router(config)# <span class="k">aaa new-model</span>
-Router(config)# <span class="k">aaa authentication login</span> <span class="v">default</span> group radius local</pre>
-      </div>
-    </details>
-    <details class="step" open>
-      <summary><span class="num">3</span> Appliquer sur la console</summary>
-      <div class="body">
-        <pre class="cli">Router(config)# <span class="k">line console 0</span>
-Router(config-line)# <span class="k">login authentication</span> default</pre>
-      </div>
-    </details>
-    <details class="step">
-      <summary><span class="num">4</span> Accounting avec RADIUS</summary>
-      <div class="body">
-        <pre class="cli">Router(config)# <span class="k">aaa accounting exec</span> <span class="v">default</span> start-stop group radius</pre>
-        <p class="ambig">Contrairement à TACACS+, RADIUS ne permet pas l'accounting détaillé par commande.</p>
-      </div>
-    </details>
-  </div>
-
-  <div class="content-block">
-    <div class="callout retenir">
-      <div class="head">🧠 À retenir — AAA serveur</div>
-      <ul>
-        <li>Toujours déclarer le serveur (<span class="mono">tacacs server</span> / <span class="mono">radius server</span>) avec sa clé partagée <strong>avant</strong> de créer la liste d'authentification.</li>
-        <li>Toujours garder <span class="mono">local</span> en méthode de secours après <span class="mono">group tacacs+</span> / <span class="mono">group radius</span>.</li>
-        <li>Seul TACACS+ permet un contrôle fin des commandes autorisées par niveau de privilège.</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<!-- ================= COMPARAISON ================= -->
-<section class="chapter" id="comparaison">
-  <h2>5. Comparaison des 3 méthodes d'AAA</h2>
-  <div class="content-block">
-    <p><span class="note-add">Synthèse ajoutée pour faciliter la révision</span> — regroupe les informations vues séparément pour chaque mode.</p>
-  </div>
-  <div class="content-block tablewrap">
-    <table>
-      <caption>Tableau comparatif — AAA locale / TACACS+ / RADIUS</caption>
-      <thead><tr><th>Critère</th><th><span class="lvl local">AAA locale</span></th><th><span class="lvl tacacs">TACACS+</span></th><th><span class="lvl radius">RADIUS</span></th></tr></thead>
-      <tbody>
-        <tr><td><strong>Stockage des comptes</strong></td><td>Sur l'équipement lui-même</td><td>Serveur externe dédié</td><td>Serveur externe dédié</td></tr>
-        <tr><td><strong>Dépendance réseau</strong></td><td>Aucune</td><td>Oui (accès au serveur requis)</td><td>Oui (accès au serveur requis)</td></tr>
-        <tr><td><strong>Protocole / port</strong></td><td>—</td><td>TCP / 49</td><td>UDP / 1812, 1813</td></tr>
-        <tr><td><strong>Chiffrement</strong></td><td>Mot de passe chiffré localement (secret)</td><td>Paquet entier chiffré</td><td>Mot de passe uniquement</td></tr>
-        <tr><td><strong>Granularité des droits</strong></td><td>Par niveau de privilège local</td><td>Très fine (par commande)</td><td>Plus limitée</td></tr>
-        <tr><td><strong>Usage typique</strong></td><td>Petit réseau, secours</td><td>Administration des équipements</td><td>Accès réseau utilisateurs (Wi-Fi, VPN, 802.1X)</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="content-block">
-    <div class="callout astuce">
-      <div class="head">💡 Astuce pour ne pas les confondre</div>
-      <ul>
-        <li><strong>Local</strong> = pense « pas de réseau requis, secours toujours disponible ».</li>
-        <li><strong>TACACS+</strong> = pense « Cisco + Contrôle des Commandes + Chiffré en entier » (3 C).</li>
-        <li><strong>RADIUS</strong> = pense « Réseau (Wi-Fi/VPN) + Rapide (UDP) + standaRD ouvert ».</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<!-- ================= LABS RECAP ================= -->
-<section class="chapter" id="labs">
-  <h2>6. Récapitulatif des 3 travaux pratiques Packet Tracer</h2>
-
-  <h3 class="part">6.1 Lab 1 — AAA, vue d'ensemble</h3>
-  <div class="content-block">
-    <p><strong>Objectif :</strong> découvrir le fonctionnement global du modèle AAA sur un routeur Cisco, avant de le décliner en local puis en serveur.</p>
-    <ul>
-      <li>Comprendre le rôle des 3 A (Authentication, Authorization, Accounting).</li>
-      <li>Observer le comportement <strong>sans AAA</strong> (mot de passe de ligne simple) puis <strong>avec AAA</strong> activé.</li>
-      <li>Identifier les lignes concernées : console, vty.</li>
-    </ul>
-  </div>
-
-  <h3 class="part">6.2 Lab 2 — AAA locale (console &amp; vty)</h3>
-  <div class="content-block">
-    <p><strong>Objectif :</strong> mettre en place une authentification par compte individuel, sans serveur externe.</p>
-    <div class="tablewrap"><table>
-      <caption>Plan type — Lab AAA locale</caption>
-      <thead><tr><th>Élément</th><th>Valeur d'exemple</th></tr></thead>
-      <tbody>
-        <tr><td>Équipement</td><td>Router / Switch Cisco IOS</td></tr>
-        <tr><td>Comptes locaux</td><td>admin (privilège 15), technicien (privilège 1)</td></tr>
-        <tr><td>Lignes configurées</td><td>console 0, vty 0 4</td></tr>
-        <tr><td>Commande clé</td><td class="mono">aaa authentication login default local</td></tr>
-      </tbody>
-    </table></div>
-    <p><strong>Vérification attendue :</strong> une connexion console ou SSH doit désormais demander un identifiant <em>et</em> un mot de passe (plus seulement un mot de passe).</p>
-  </div>
-
-  <h3 class="part">6.3 Lab 3 — AAA serveur (TACACS+ / RADIUS, console)</h3>
-  <div class="content-block">
-    <p><strong>Objectif :</strong> déléguer l'authentification de la console à un serveur AAA externe, avec secours local en cas de panne du serveur.</p>
-    <div class="tablewrap"><table>
-      <caption>Plan type — Lab AAA serveur</caption>
-      <thead><tr><th>Élément</th><th>Valeur d'exemple</th></tr></thead>
-      <tbody>
-        <tr><td>Serveur TACACS+</td><td>192.168.1.10, clé <span class="mono">Cisco123secret</span></td></tr>
-        <tr><td>Serveur RADIUS</td><td>192.168.1.20, ports 1812/1813, clé <span class="mono">testing123</span></td></tr>
-        <tr><td>Ligne configurée</td><td>console 0</td></tr>
-        <tr><td>Commande clé (TACACS+)</td><td class="mono">aaa authentication login default group tacacs+ local</td></tr>
-        <tr><td>Commande clé (RADIUS)</td><td class="mono">aaa authentication login default group radius local</td></tr>
-      </tbody>
-    </table></div>
-    <p><strong>Vérification attendue :</strong> la connexion console interroge le serveur déclaré ; si celui-ci est éteint ou injoignable dans la maquette, le routeur bascule sur la méthode <span class="mono">local</span>.</p>
-  </div>
-
-  <div class="content-block">
-    <div class="callout exemple">
-      <div class="head">📌 Bon réflexe en Packet Tracer</div>
-      <p>Toujours tester dans cet ordre : (1) serveur AAA <strong>éteint</strong> → vérifier que le compte <span class="mono">local</span> de secours fonctionne toujours ; (2) serveur AAA <strong>allumé</strong> avec la bonne clé partagée → vérifier que le compte du serveur fonctionne ; (3) mauvaise clé partagée → vérifier que l'authentification échoue proprement.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ================= DEBUG ================= -->
-<section class="chapter" id="debug">
-  <h2>7. Vérification et dépannage</h2>
-  <div class="content-block tablewrap">
-    <table>
-      <caption>Commandes de vérification et de débogage AAA</caption>
-      <thead><tr><th>Commande</th><th>Utilité</th></tr></thead>
-      <tbody>
-        <tr><td class="mono">show running-config | include aaa</td><td>Lister toutes les commandes AAA actives</td></tr>
-        <tr><td class="mono">show aaa servers</td><td>Voir l'état des serveurs TACACS+/RADIUS déclarés</td></tr>
-        <tr><td class="mono">debug aaa authentication</td><td>Suivre en direct le déroulement d'une authentification</td></tr>
-        <tr><td class="mono">debug tacacs</td><td>Détailler les échanges avec un serveur TACACS+</td></tr>
-        <tr><td class="mono">debug radius</td><td>Détailler les échanges avec un serveur RADIUS</td></tr>
-        <tr><td class="mono">test aaa group tacacs+ user pass legacy</td><td>Tester un couple identifiant/mot de passe contre le groupe TACACS+ sans se déconnecter</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="content-block">
-    <div class="callout attention">
-      <div class="head">⚠️ Attention avant de couper la session</div>
-      <p>Avant de valider une nouvelle configuration AAA sur les lignes <strong>vty</strong> (accès distant), garder une session déjà ouverte (ou la console) tant que la nouvelle authentification n'est pas validée — une erreur de configuration peut couper tout accès distant à l'équipement.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ================= A RETENIR ================= -->
-<section class="chapter" id="retenir">
-  <h2>8. À retenir — l'essentiel du cours</h2>
-  <div class="content-block">
-    <div class="callout retenir">
-      <div class="head">🧠 Les points essentiels</div>
-      <ol>
-        <li><strong>AAA</strong> = Authentication (qui es-tu) + Authorization (qu'as-tu le droit de faire) + Accounting (qu'as-tu fait).</li>
-        <li><span class="mono">aaa new-model</span> est le préalable obligatoire avant toute autre commande AAA.</li>
-        <li>Une liste de méthodes essaie chaque méthode <strong>dans l'ordre</strong>, en passant à la suivante seulement si le serveur précédent ne répond pas (pas en cas de refus).</li>
-        <li><strong>AAA locale</strong> = pas de dépendance réseau, mais pas centralisée.</li>
-        <li><strong>TACACS+</strong> (TCP/49, tout chiffré) = idéal pour l'administration des équipements, contrôle fin des commandes.</li>
-        <li><strong>RADIUS</strong> (UDP/1812-1813, mot de passe chiffré) = standard ouvert, idéal pour l'accès réseau des utilisateurs.</li>
-        <li>Toujours garder une méthode de secours <span class="mono">local</span> après un serveur externe.</li>
-      </ol>
-    </div>
-  </div>
-  <div class="content-block">
-    <div class="keywords">
-      <span class="kw">AAA</span><span class="kw">Authentication</span><span class="kw">Authorization</span><span class="kw">Accounting</span>
-      <span class="kw">aaa new-model</span><span class="kw">method list</span><span class="kw">login authentication</span>
-      <span class="kw">username secret</span><span class="kw">TACACS+</span><span class="kw">RADIUS</span>
-      <span class="kw">TCP/49</span><span class="kw">UDP/1812-1813</span><span class="kw">group tacacs+</span><span class="kw">group radius</span>
-      <span class="kw">console</span><span class="kw">vty</span><span class="kw">privilege 15</span><span class="kw">debug aaa</span>
-    </div>
-  </div>
-</section>
-
-<!-- ================= REVISION ================= -->
-<section class="chapter" id="revision">
-  <h2>9. Révision — Questions / Réponses</h2>
-  <div class="content-block"><p>Clique sur une question pour révéler la réponse.</p></div>
-  <div class="content-block" id="qaList">
-    <div class="qa"><div class="q"><span class="qn">Q1.</span> Que signifie AAA ?</div><div class="a">Authentication, Authorization, Accounting.</div></div>
-    <div class="qa"><div class="q"><span class="qn">Q2.</span> Quelle commande active le modèle AAA sur un routeur Cisco ?</div><div class="a">aaa new-model</div></div>
-    <div class="qa"><div class="q"><span class="qn">Q3.</span> Quelle est la différence entre une liste de méthodes « default » et une liste nommée ?</div><div class="a">La liste default s'applique automatiquement à toutes les lignes ; une liste nommée doit être appliquée manuellement sur chaque ligne avec « login authentication <nom> ».</div></div>
-    <div class="qa"><div class="q"><span class="qn">Q4.</span> Pourquoi toujours ajouter « local » après « group tacacs+ » dans une liste d'authentification ?</div><div class="a">Pour disposer d'une méthode de secours si le serveur TACACS+ est injoignable, et éviter de se retrouver bloqué hors de l'équipement.</div></div>
-    <div class="qa"><div class="q"><span class="qn">Q5.</span> Sur quel port et quel protocole de transport fonctionne TACACS+ ?</div><div class="a">TCP, port 49.</div></div>
-    <div class="qa"><div class="q"><span class="qn">Q6.</span> Sur quels ports fonctionne RADIUS ?</div><div class="a">UDP, ports 1812 (authentification) et 1813 (accounting).</div></div>
-    <div class="qa"><div class="q"><span class="qn">Q7.</span> Quelle est la principale différence de chiffrement entre TACACS+ et RADIUS ?</div><div class="a">TACACS+ chiffre tout le paquet ; RADIUS ne chiffre que le mot de passe.</div></div>
-    <div class="qa"><div class="q"><span class="qn">Q8.</span> Quel protocole permet de contrôler finement quelles commandes CLI un utilisateur peut exécuter ?</div><div class="a">TACACS+ (via aaa authorization commands).</div></div>
-    <div class="qa"><div class="q"><span class="qn">Q9.</span> Pourquoi utilise-t-on « username … secret … » plutôt que « username … password … » ?</div><div class="a">« secret » chiffre le mot de passe dans la configuration, contrairement à « password » qui peut le laisser en clair (ou faiblement chiffré selon le type).</div></div>
-    <div class="qa"><div class="q"><span class="qn">Q10.</span> Quel est le protocole recommandé sur les lignes vty plutôt que Telnet, et pourquoi ?</div><div class="a">SSH, car il chiffre la session alors que Telnet transmet les identifiants en clair.</div></div>
-    <div class="qa"><div class="q"><span class="qn">Q11.</span> Quel type d'usage privilégie RADIUS par rapport à TACACS+ ?</div><div class="a">L'accès réseau des utilisateurs finaux (Wi-Fi, VPN, 802.1X), alors que TACACS+ est plutôt utilisé pour l'administration des équipements réseau.</div></div>
-    <div class="qa"><div class="q"><span class="qn">Q12.</span> Que faut-il déclarer avant de créer une liste d'authentification utilisant un serveur TACACS+ ou RADIUS ?</div><div class="a">Le serveur lui-même (adresse IP et clé partagée), avec « tacacs server » ou « radius server ».</div></div>
-  </div>
-</section>
-
-<footer class="pagefoot">
-  Fiche de révision construite à partir du déroulé standard des travaux pratiques AAA sur Cisco IOS (local, TACACS+, RADIUS). Les valeurs d'adressage IP et de clés partagées sont des exemples pédagogiques — à remplacer par celles de vos propres maquettes Packet Tracer.
-</footer>
-
-</main>
+<h3>4.B TP complet : 2 domaines + approbation externe bidirectionnelle <span class="src">[STR]</span></h3>
+<p>Plan : <code>SERVER1.LES-COMORES.KM</code> (192.168.3.20) et <code>SERVER2.TSINIMOICHONGO.KM</code> (192.168.3.10), Windows Server 2008. Comptes de test : <code>Le-comorien@les-comores.km</code> et <code>Halima@tsinimoichongo.km</code>.</p>
+<div class="box pie"><div class="t">🪤 Les 3 erreurs qui font tout planter</div>
+<p>1) <span class="hp">DNS</span> mal configuré ⇒ les 2 serveurs ne se voient pas. 2) <span class="hp">Horloges/fuseaux différents</span> ⇒ Kerberos refuse (voir §5). 3) Oublier de configurer la <b>redirection DNS sur les DEUX serveurs</b>. <span class="src">[STR p.18, p.31]</span></p></div>
+<div class="steps">
+<div class="step"><b>Nom + IP fixe</b> : renomme la machine (SERVER1), IP statique.</div>
+<div class="step"><b>Installer le rôle DNS</b> : Gestionnaire de serveur → Rôles → Ajouter des rôles → cocher <i>Serveur DNS</i> → Installer.</div>
+<div class="step"><b>Promouvoir en contrôleur de domaine</b> : <span class="hg">Exécuter → dcpromo</span>. Mode avancé non coché. Choisis <b>« Créer un domaine dans une nouvelle forêt »</b> (important : chaque serveur = SA forêt), nom <code>Les-comores.km</code>, niveau fonctionnel <b>Windows Server 2008</b>, laisse DNS + catalogue global cochés. Message « délégation DNS impossible » → <i>Oui</i> (normal). Garde les chemins par défaut (NTDS, SYSVOL). Définis le mot de passe de restauration <u>et ne l'oublie pas</u>. Redémarre.</div>
+<div class="step"><b>Zone inverse DNS</b> : Outils d'administration → DNS → Zones de recherche inversée → Nouvelle zone → principale, intégrée AD, IPv4, ID réseau <code>192.168.3</code>, mises à jour <i>sécurisées seulement</i>.</div>
+<div class="step"><b>Enregistrement PTR</b> : clic droit sur la zone inverse → Nouveau pointeur (PTR) → IP 192.168.3.20 → Parcourir jusqu'à server1. <b>Test</b> : <span class="hg">nslookup</span> doit répondre <code>server1.les-comores.km</code> ↔ 192.168.3.20.</div>
+<div class="step"><b>Refaire TOUT sur SERVER2</b> (IP 192.168.3.10, forêt <code>Tsinimoichongo.km</code>), puis tester son nslookup. « Sinon pas la peine » : l'approbation en dépend.</div>
+<div class="step"><b>Redirecteurs DNS</b> : DNS → clic droit serveur → Propriétés → Redirecteurs → Modifier → ajoute l'IP de l'autre serveur (SERVER1 → 192.168.3.10, et inversement). Vérifie la coche verte « Validé ».</div>
+<div class="step"><b>Créer les utilisateurs</b> : Utilisateurs et ordinateurs AD → Users → Nouveau → Utilisateur (le-comorien ici, halima sur SERVER2).</div>
+<div class="step"><b>Créer l'approbation</b> (sur SERVER1 seulement) : Outils d'administration → Domaines et approbations AD → Propriétés de Les-comores.km → onglet Approbations → Nouvelle approbation → nom <code>TSINIMOICHONGO</code> → type <span class="hl">Externe</span> → sens <span class="hl">Bidirectionnel</span> → « Ce domaine et le domaine spécifié » → compte Administrateur de SERVER2 → authentification pour toutes les ressources → confirmer l'approbation <u>sortante OUI</u> et <u>entrante OUI</u> → Terminer.</div>
+<div class="step"><b>Valider</b> : Propriétés de l'approbation → <span class="hg">Valider</span> → « Oui, valider l'approbation entrante » + admin de l'autre domaine. Refais pour l'autre sens. Le tableau montre : <b>Type = Externe, Transitif = Non</b>.</div>
+<div class="step"><b>Partage de test</b> : dossier DOSSIER_PARTAGE → Propriétés → Partage avancé → Partager → Autorisations → Ajouter les comptes <u>des deux domaines</u> (changer l'<b>Emplacement</b> pour l'autre domaine). Répète dans l'onglet <b>Sécurité</b> (NTFS).</div>
+<div class="step"><b>Test</b> : depuis SERVER2 : <span class="hg">Exécuter → \\192.168.3.20</span> ⇒ on voit le dossier. Un client Windows 7 (DHCP 192.168.3.22-24) joint à Les-comores.km se connecte avec <code>le-comorien</code> <u>ou</u> <code>TSINIMOICHONGO\halima</code> (format <b>DOMAINE\utilisateur</b>, car halima n'existe pas dans le domaine joint).</div>
 </div>
-
-<button id="backtotop" aria-label="Retour en haut">↑</button>
-
-<script>
-const themeBtn = document.getElementById('themeBtn');
-const themeLbl = document.getElementById('themeLbl');
-let dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-function applyTheme(){
-  document.documentElement.classList.toggle('dark', dark);
-  themeLbl.textContent = dark ? 'Clair' : 'Sombre';
-  themeBtn.firstChild.textContent = dark ? '☀️ ' : '🌙 ';
-}
-applyTheme();
-themeBtn.addEventListener('click', ()=>{ dark = !dark; applyTheme(); });
-
-const sidebar = document.getElementById('sidebar');
-const menuBtn = document.getElementById('menuBtn');
-menuBtn.addEventListener('click', ()=> sidebar.classList.toggle('open'));
-document.querySelectorAll('.sidebar nav a').forEach(a=>{ a.addEventListener('click', ()=> sidebar.classList.remove('open')); });
-
-const progress = document.getElementById('progress');
-const backBtn = document.getElementById('backtotop');
-const sections = Array.from(document.querySelectorAll('section.chapter'));
-const navLinks = Array.from(document.querySelectorAll('#sidenav a'));
-
-function onScroll(){
-  const h = document.documentElement;
-  const scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
-  progress.style.width = scrolled + '%';
-  backBtn.classList.toggle('show', h.scrollTop > 500);
-  let currentId = sections[0] ? sections[0].id : null;
-  for(const sec of sections){ const rect = sec.getBoundingClientRect(); if(rect.top <= 90){ currentId = sec.id; } }
-  navLinks.forEach(l=> l.classList.toggle('active', l.dataset.target === currentId));
-}
-document.addEventListener('scroll', onScroll, {passive:true});
-onScroll();
-backBtn.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
-
-const searchInput = document.getElementById('searchInput');
-const searchCount = document.getElementById('searchCount');
-const blocks = Array.from(document.querySelectorAll('.content-block'));
-let searchTimer;
-
-function clearHighlights(root){
-  root.querySelectorAll('mark').forEach(m=>{ const parent = m.parentNode; parent.replaceChild(document.createTextNode(m.textContent), m); parent.normalize(); });
-}
-function highlight(el, term){
-  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
-  const nodes = []; let n;
-  while(n = walker.nextNode()){ if(n.nodeValue.toLowerCase().includes(term)) nodes.push(n); }
-  nodes.forEach(node=>{
-    const text = node.nodeValue; const idx = text.toLowerCase().indexOf(term);
-    if(idx === -1) return;
-    const before = text.slice(0, idx); const match = text.slice(idx, idx+term.length); const after = text.slice(idx+term.length);
-    const frag = document.createDocumentFragment();
-    frag.appendChild(document.createTextNode(before));
-    const mark = document.createElement('mark'); mark.textContent = match; frag.appendChild(mark);
-    frag.appendChild(document.createTextNode(after));
-    node.parentNode.replaceChild(frag, node);
-  });
-}
-searchInput.addEventListener('input', ()=>{
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(()=>{
-    const term = searchInput.value.trim().toLowerCase();
-    blocks.forEach(b=> clearHighlights(b));
-    if(term.length < 2){ blocks.forEach(b=> b.classList.remove('hide')); searchCount.textContent=''; return; }
-    let count = 0;
-    blocks.forEach(b=>{
-      const matches = b.textContent.toLowerCase().includes(term);
-      b.classList.toggle('hide', !matches);
-      if(matches){ count++; highlight(b, term); }
-    });
-    searchCount.textContent = count + ' résultat' + (count>1?'s':'');
-  }, 150);
-});
-
-document.querySelectorAll('#qaList .qa').forEach(qa=>{ qa.addEventListener('click', ()=> qa.classList.toggle('open')); });
-</script>
-</body>
-</html>
+<div class="note"><b>📝 Remarque</b><p>Dans [STR p.35] l'étendue DHCP affiche « 192.168.2.24 » et « passerelle 192.168.2.1 » dans le texte alors que la capture montre 3.24 / 3.1 : c'est une faute de frappe, le réseau est 192.168.3.0/24.</p></div>
+<div class="box ast"><div class="t">💡 Filtrage SID <span class="src">[STR p.26 · PROG]</span></div>
+<p>Sur une approbation externe, Windows active par défaut le <span class="hl">filtrage SID</span> : un utilisateur migré porte l'ancien SID (<i>SID History</i>) ; sans filtre, quelqu'un pourrait <u>usurper le SID d'un admin</u> (« usurpation de SID » du programme). Le filtre ignore les SID étrangers au domaine approuvé. On ne le désactive que pour une migration.</p></div>
+</section><div class="pager"><a href="#" data-go="3">← Précédent</a><a href="#" data-go="0">📑 Sommaire</a><a href="#" data-go="5">Suivant →</a></div></div><div class="pg" data-t="4b. TP parent/enfant &amp; GPO"><section><h2>4b. TP : domaine parent/enfant, groupes, GPO</h2>
+<p>Sources : <span class="src">[TP-ADM]</span> « Domaine parent/enfant, groupes et GPO » · <span class="src">[TP-PE]</span> « Authentification cross-domain Parent → Enfant » · <span class="src">[TP-GPO]</span> « TP avancés GPO ».</p>
+<h3>4b.1 Construire la forêt (parent + enfant) <span class="src">[TP-ADM ét.1-4]</span></h3><svg viewBox="0 0 720 340" role="img" style="width:100%;max-width:720px;display:block;background:#fff;border:2px solid #1d2a44;border-radius:8px;margin:0 0 32px;font-family:Caveat,cursive;font-size:20px;fill:#1d2a44"><defs><marker id="m4" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8 z" fill="context-stroke"/></marker></defs><rect x="10" y="10" width="700" height="320" rx="16" fill="none" stroke="#1d2a44" stroke-width="2" stroke-dasharray="9 6"/><text x="360" y="36" text-anchor="middle" font-size="22" fill="#1d2a44" stroke="none">Forêt entreprise.local = frontière de sécurité</text><rect x="30" y="60" width="240" height="170" rx="12" fill="#e1f4ff" stroke="#1d2a44" stroke-width="2.5"/><text x="150.0" y="103.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">ParentDC</text><text x="150.0" y="127.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">entreprise.local</text><text x="150.0" y="151.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">IP 192.168.1.10</text><text x="150.0" y="175.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">DNS : lui-même</text><text x="150.0" y="199.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">👥 IT-Parent · 👤 AdminParent</text><rect x="450" y="60" width="240" height="170" rx="12" fill="#e9ffe9" stroke="#1d2a44" stroke-width="2.5"/><text x="570.0" y="103.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">ChildDC</text><text x="570.0" y="127.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">alger.entreprise.local</text><text x="570.0" y="151.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">IP 192.168.1.20</text><text x="570.0" y="175.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">DNS : ParentDC ⚠️</text><text x="570.0" y="199.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">👥 IT-Child · 👤 AdminChild</text><line x1="270" y1="145" x2="450" y2="145" stroke="#1f9d55" stroke-width="3" marker-end="url(#m4)" marker-start="url(#m4)"/><text x="360" y="110" text-anchor="middle" font-size="18" fill="#1f9d55" stroke="none">approbation créée</text><text x="360" y="130" text-anchor="middle" font-size="18" fill="#1f9d55" stroke="none">automatiquement</text><text x="360" y="176" text-anchor="middle" font-size="18" fill="#1f9d55" stroke="none">bidirectionnelle</text><text x="360" y="196" text-anchor="middle" font-size="18" fill="#1f9d55" stroke="none">+ transitive</text><path d="M570 230 Q360 310 150 230" fill="none" stroke="#e8780c" stroke-width="3" stroke-dasharray="7 5" marker-end="url(#m4)"/><text x="360" y="300" text-anchor="middle" font-size="18" fill="#e8780c" stroke="none">le DNS de l'enfant pointe vers le parent (sinon ça plante)</text></svg>
+<div class="box def"><div class="t">📘 Idées de base</div><p><b>Forêt</b> = la frontière de sécurité. <b>Domaine parent</b> = la racine de toute la structure. <b>Domaine enfant</b> (ex. <code>alger.entreprise.local</code>) hérite du DNS du parent et reçoit <u>automatiquement</u> une approbation <span class="hl">bidirectionnelle + transitive</span>.</p></div>
+<div class="steps">
+<div class="step"><b>ParentDC</b> : IP statique <code>192.168.1.10</code>, masque 255.255.255.0, passerelle 192.168.1.1, <span class="hl">DNS = lui-même</span> (192.168.1.10).</div>
+<div class="step"><b>ChildDC</b> : IP <code>192.168.1.20</code>, mais DNS = <span class="hp">ParentDC (192.168.1.10)</span>. Sinon il ne trouve pas la forêt. Teste avec <span class="hg">ping 192.168.1.10</span>.</div>
+<div class="step">Sur ParentDC : Gestionnaire de serveur → Ajouter des rôles → <b>AD DS</b> → Installer → <b>Promouvoir en contrôleur de domaine</b> → <i>Créer une nouvelle forêt</i> → <code>entreprise.local</code> → mot de passe <b>DSRM</b> (restauration) → redémarrage.</div>
+<div class="step">Sur ChildDC : installe AD DS → Promouvoir → <i>Ajouter un domaine à une forêt existante → Domaine enfant</i> → parent <code>entreprise.local</code>, enfant <code>alger</code> → compte admin de ParentDC → DNS coché → redémarrage.</div>
+<div class="step"><b>Groupes/utilisateurs</b> (Utilisateurs et ordinateurs AD) : sur ParentDC groupe de sécurité <code>IT-Parent</code> + utilisateur <code>AdminParent</code> membre ; sur ChildDC <code>IT-Child</code> + <code>AdminChild</code>. Option : <b>groupe restreint</b> via GPO pour mettre AdminChild admin local de tous les PC de l'enfant.</div>
+</div>
+<h3>4b.2 GPO de mot de passe <span class="src">[TP-ADM ét.5]</span></h3>
+<div class="steps"><div class="step">ParentDC → <span class="hg">gpmc.msc</span> → clic droit sur le domaine → Créer un GPO → <code>PasswordPolicy-Parent</code>.</div>
+<div class="step">Longueur minimale <b>8</b> · historique <b>5</b> mots de passe · durée maximale <b>90 jours</b>.</div>
+<div class="step">Lie-la au domaine, puis <span class="hg">gpupdate /force</span> et vérifie avec <span class="hg">net user NomUtilisateur /domain</span>.</div></div>
+<div class="box pie"><div class="t">🪤 Attention (complément <span class="src">[+]</span>)</div><p>Une stratégie de mot de passe liée à <code>entreprise.local</code> s'applique <b>aux comptes de CE domaine</b>. Le domaine enfant <span class="hp">n'en hérite pas</span> : chaque domaine a sa propre stratégie de mot de passe. Si le TP te demande de tester sur un utilisateur de l'enfant, crée aussi une GPO sur <code>alger</code>.</p></div>
+<h3>4b.3 Tester l'approbation parent → enfant <span class="src">[TP-PE]</span></h3>
+<p>But : <b>Alice</b> (compte <code>parent.com\Alice</code>) accède à un partage de l'enfant <u>sans compte créé dans l'enfant</u>.</p>
+<div class="steps">
+<div class="step">Sur le serveur enfant : <b>Active Directory Domains and Trusts</b> → clic droit sur le domaine enfant → Properties → <b>Trusts</b> : le parent est listé, <b>bidirectionnel + transitif</b>.</div>
+<div class="step">Crée <code>C:\Docs</code> → Propriétés → Partage → <b>Partage avancé</b> → Partager, nom <code>Docs</code>.</div>
+<div class="step">Permissions → Ajouter → <b>Emplacement</b> → choisir le domaine <u>parent</u> → ajoute Alice (ou mieux un <i>groupe</i> qui la contient) → Lecture/Écriture.</div>
+<div class="step">Connecte-toi sur une machine de l'enfant en <code>parent.com\Alice</code>, ouvre <span class="hg">\\enfant\Docs</span>, crée/modifie un fichier.</div>
+<div class="step">Preuve (option) : <b>Observateur d'événements → Sécurité → ID 4624</b> montre <code>parent.com\Alice</code> authentifiée via le trust. Teste aussi <span class="hg">whoami /groups</span> (cas AdminChild sur ParentDC).</div></div>
+<h3>4b.4 Sécurité de base <span class="src">[TP-ADM ét.7]</span></h3>
+<p>Mises à jour Windows installées · <b>MBSA</b> sur les 2 serveurs · test du verrouillage de compte · test de la GPO mot de passe. <span class="src">[+]</span> MBSA est un outil ancien (plus maintenu par Microsoft) : en pratique on utilise Windows Update/WSUS et d'autres scanners, mais il reste au programme.</p>
+<h3>4b.5 TP avancés GPO <span class="src">[TP-GPO]</span></h3>
+<div class="wrap"><table><tr><th>TP</th><th>Principe + chemin</th><th>Résultat</th></tr>
+<tr><td><b>1. Dossier accessible 08h–16h</b></td><td>Les GPO ne gèrent pas les horaires seules : droits NTFS (groupe <code>Acces_Horaire</code>) + <b>scripts PowerShell</b>. Ouverture de session (Configuration utilisateur → Paramètres Windows → Scripts) : <code>if ((Get-Date).Hour -ge 8 -and (Get-Date).Hour -lt 16) { net use Z: \\serveur\Partage_Horaire /persistent:no }</code>. Fermeture de session : <code>net use Z: /delete</code></td><td>Lecteur Z: visible seulement dans la plage</td></tr>
+<tr><td><b>2. GPO uniquement sur portables</b></td><td><b>Filtre WMI</b> : <code>SELECT * FROM Win32_SystemEnclosure WHERE ChassisTypes = "9"</code> (9 = Laptop). GPO <code>GPO_Portables</code> liée à l'OU, filtre associé. Exemple de réglage : Modèles d'administration → Système → Gestion de l'alimentation</td><td>S'applique aux laptops seulement</td></tr>
+<tr><td><b>3. Audit des accès refusés</b></td><td>(a) GPO : Stratégie d'audit → <i>Audit de l'accès aux objets</i> → <b>Succès et échecs</b>. (b) Dossier → Sécurité → Avancé → <b>Audit</b> → Tout le monde → cocher <b>Échec</b>. (c) Observateur d'événements → Sécurité → <span class="hg">ID 4663</span></td><td>Trace de qui a tenté l'accès</td></tr>
+<tr><td><b>4. Bloquer les clés USB</b></td><td>Configuration ordinateur → Modèles d'administration → Système → <b>Accès au stockage amovible</b> → activer « Refuser tout accès au stockage amovible »</td><td>Clé détectée mais inutilisable ; clavier/souris OK</td></tr></table></div>
+<div class="box pie"><div class="t">🪤 Limites à connaître <span class="src">[+]</span></div><ul><li>TP 1 : le script ne s'exécute qu'à la <u>connexion/déconnexion</u> ; quelqu'un connecté à 15h59 garde son lecteur après 16h, et les droits NTFS restent ouverts. Pour une vraie restriction horaire, utilise les <b>horaires d'accès du compte</b> (Logon hours) ou une tâche planifiée qui retire le partage.</li><li>TP 2 : 9 = Laptop ; certains portables sont déclarés 10 (Notebook) ou 14 (Sub Notebook) : adapte la requête avec <code>OR</code>.</li><li>TP 3 : l'audit ne marche que si <b>les deux</b> niveaux (GPO + audit NTFS) sont activés.</li></ul></div>
+</section><div class="pager"><a href="#" data-go="4">← Précédent</a><a href="#" data-go="0">📑 Sommaire</a><a href="#" data-go="6">Suivant →</a></div></div><div class="pg" data-t="5. Kerberos, LM, RADIUS"><section><h2>5. Les méthodes d'authentification : Kerberos, LanManager, RADIUS</h2>
+<p><span class="src">[PROG]</span> : « authentification entre forêts, avec serveurs non-Windows, usurpation de SID, filtrage SID, LanManager, Kerberos, Radius ».</p>
+<h3>5.1 Kerberos : le principe <span class="src">[KRB]</span></h3>
+<p>Protocole d'authentification <span class="hl">sur réseau non sûr</span>, basé sur la <b>cryptographie à clé symétrique</b>. Il donne : confidentialité, intégrité, <u>authentification mutuelle</u>, protection contre le rejeu. Nom = <b>Cerbère</b>, chien à 3 têtes des Enfers (mythologie). Né au MIT (projet Athena, 1983) ; v4 fin des années 80 (DES 56 bits) ; <b>v5 en 1993</b> (RFC 1510, remplacé par le <b>RFC 4120</b> en 2005). Windows 2000 l'a intégré à Active Directory.</p>
+<div class="wrap"><table><tr><th>Mot</th><th>Explication simple</th></tr>
+<tr><td><b>Royaume (realm)</b></td><td>Le réseau protégé, nom en MAJUSCULES, dérivé du domaine : <code>IRISA.FR</code>. Dans AD : le domaine.</td></tr>
+<tr><td><b>Principal</b></td><td>Une <u>identité</u> : utilisateur, machine ou service. Format <code>user@REALM</code>, <code>host/lepton.irisa.fr@IRISA.FR</code>. Chacun a une clé (celle d'un utilisateur est dérivée de son mot de passe + le royaume = « salage »).</td></tr>
+<tr><td><b>KDC</b> (Key Distribution Center)</td><td>Le serveur de confiance, composé de <b>AS</b> (Authentication Server : donne les TGT) et <b>TGS</b> (Ticket Granting Server : donne les tickets de service). Dans AD = <span class="hl">le contrôleur de domaine</span>. Si le KDC tombe/est piraté, tout tombe.</td></tr>
+<tr><td><b>TGT</b></td><td>Ticket initial, obtenu avec le mot de passe, valide ~24 h. C'est ta « carte d'identité » pour demander d'autres tickets.</td></tr>
+<tr><td><b>Ticket de service (TS)</b></td><td>Ticket pour <u>un</u> service précis. Demandé avec le TGT <b>sans retaper le mot de passe</b>.</td></tr>
+<tr><td><b>Credential cache</b></td><td>L'endroit où les tickets sont rangés (fichier chez MIT/Heimdal, mémoire chez Microsoft).</td></tr></table></div>
+<svg viewBox="0 0 900 420" role="img" style="width:100%;max-width:900px;display:block;background:#fff;border:2px solid #1d2a44;border-radius:8px;margin:0 0 32px;font-family:Caveat,cursive;font-size:20px;fill:#1d2a44"><defs><marker id="m3" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8 z" fill="context-stroke"/></marker></defs><rect x="20" y="150" width="130" height="90" rx="12" fill="#e1f4ff" stroke="#1d2a44" stroke-width="2.5"/><text x="85.0" y="189.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">👤 Client</text><text x="85.0" y="213.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">(toi)</text><rect x="270" y="15" width="200" height="225" rx="12" fill="#fffbe6" stroke="#1d2a44" stroke-width="2.5" stroke-dasharray="8 5"/><text x="370.0" y="133.5" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none"></text><text x="370" y="38" text-anchor="middle" font-size="17" fill="#1d2a44" stroke="none">KDC (= contrôleur de domaine)</text><rect x="290" y="60" width="160" height="60" rx="12" fill="#ffe08a" stroke="#1d2a44" stroke-width="2.5"/><text x="370.0" y="84.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">AS</text><text x="370.0" y="108.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">donne les TGT</text><rect x="290" y="150" width="160" height="60" rx="12" fill="#ffe08a" stroke="#1d2a44" stroke-width="2.5"/><text x="370.0" y="174.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">TGS</text><text x="370.0" y="198.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">donne les tickets service</text><line x1="150" y1="165" x2="290" y2="85" stroke="#2457c5" stroke-width="3" marker-end="url(#m3)"/><line x1="290" y1="105" x2="150" y2="190" stroke="#1f9d55" stroke-width="3" marker-end="url(#m3)"/><line x1="150" y1="205" x2="290" y2="170" stroke="#2457c5" stroke-width="3" marker-end="url(#m3)"/><line x1="290" y1="195" x2="150" y2="228" stroke="#1f9d55" stroke-width="3" marker-end="url(#m3)"/><circle cx="215" cy="114" r="13" fill="#d93a3a"/><text x="215" y="121" text-anchor="middle" font-size="19" fill="#fff" stroke="none">1</text><circle cx="215" cy="150" r="13" fill="#d93a3a"/><text x="215" y="157" text-anchor="middle" font-size="19" fill="#fff" stroke="none">2</text><circle cx="215" cy="200" r="13" fill="#d93a3a"/><text x="215" y="207" text-anchor="middle" font-size="19" fill="#fff" stroke="none">3</text><circle cx="215" cy="225" r="13" fill="#d93a3a"/><text x="215" y="232" text-anchor="middle" font-size="19" fill="#fff" stroke="none">4</text><rect x="700" y="290" width="170" height="80" rx="12" fill="#e9ffe9" stroke="#1d2a44" stroke-width="2.5"/><text x="785.0" y="324.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">🖥️ Service</text><text x="785.0" y="348.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">(fichiers, web…)</text><path d="M85 240 L85 330 L700 330" fill="none" stroke="#e8780c" stroke-width="3" marker-end="url(#m3)"/><circle cx="380" cy="330" r="13" fill="#d93a3a"/><text x="380" y="337" text-anchor="middle" font-size="19" fill="#fff" stroke="none">5</text><text x="380" y="318" text-anchor="middle" font-size="18" fill="#e8780c" stroke="none">ticket de service + authentifieur</text><line x1="785" y1="290" x2="785" y2="250" stroke="#1f9d55" stroke-width="3" marker-end="url(#m3)"/><circle cx="815" cy="270" r="13" fill="#d93a3a"/><text x="815" y="277" text-anchor="middle" font-size="19" fill="#fff" stroke="none">6</text><text x="840" y="232" text-anchor="end" font-size="20" fill="#1f9d55" stroke="none">accès ✅</text><text x="500" y="60" text-anchor="start" font-size="18" fill="#1d2a44" stroke="none">① Tu donnes ton mot de passe à l'AS</text><text x="500" y="92" text-anchor="start" font-size="18" fill="#1d2a44" stroke="none">② L'AS te rend un TGT 🎟️ (~24 h)</text><text x="500" y="124" text-anchor="start" font-size="18" fill="#1d2a44" stroke="none">③ Tu montres ton TGT au TGS</text><text x="500" y="156" text-anchor="start" font-size="18" fill="#1d2a44" stroke="none">④ Le TGS te rend un ticket de service</text><text x="500" y="188" text-anchor="start" font-size="18" fill="#1d2a44" stroke="none">⑤ Tu présentes ticket + authentifieur</text><text x="500" y="220" text-anchor="start" font-size="18" fill="#1d2a44" stroke="none">⑥ Le service te laisse entrer</text><text x="450" y="400" text-anchor="middle" font-size="19" fill="#d93a3a" stroke="none">Le mot de passe ne circule qu'à l'étape 1 : ensuite le TGT suffit (pas besoin de le retaper).</text></svg><div class="box imp"><div class="t">⭐ Le film en 3 actes (analogie parc d'attractions)</div>
+<div class="flow"><span>1 Je donne mon mot de passe à l'AS</span><i>→</i><span>reçois un TGT 🎟️ (bracelet du parc)</span><i>→</i><span>2 Je montre le TGT au TGS</span><i>→</i><span>reçois un ticket de service (ticket de manège)</span><i>→</i><span>3 Je présente ticket + <u>authentifieur</u> chiffré au service</span><i>→</i><span>accès ✅</span></div>
+<p>L'<span class="hl">authentifieur</span> (chiffré avec la clé de session, contient l'horodatage) prouve que c'est bien moi <u>maintenant</u>. <span class="src">[KRB p.30-48 ; détail des étapes : schémas du PDF]</span></p></div>
+<h3>5.2 Les attaques et pannes de Kerberos 5 <span class="src">[KRB p.70-86]</span></h3>
+<div class="wrap"><table><tr><th>Problème</th><th>Explication</th><th>Parade</th></tr>
+<tr><td>Déchiffrement TGT hors-ligne</td><td>La demande de TGT (AS-REQ) n'est pas chiffrée : un attaquant en collecte et teste des mots de passe tranquillement chez lui.</td><td><span class="hg">Pré-authentification</span>, changement régulier + qualité des mots de passe</td></tr>
+<tr><td>Usurpation du KDC</td><td>Un faux KDC répond avant le vrai.</td><td>Vérifier le KDC en demandant un ticket <code>host/…</code> (module PAM) ; protéger le DNS</td></tr>
+<tr><td>Vol de tickets dans le cache</td><td>Fichier lisible par root.</td><td>Permissions, stockage en processus (kcm sous Heimdal)</td></tr>
+<tr><td>Rejeu d'authentifieur</td><td>Réutiliser un authentifieur capturé dans la fenêtre de <b>5 min</b> (clock skew).</td><td>Cache anti-rejeu côté serveur</td></tr>
+<tr><td>Horloges désynchronisées</td><td>Plus aucun ticket délivré.</td><td><span class="hg">NTP</span> — c'est pourquoi le TP [STR p.31] exige les mêmes heures/fuseaux !</td></tr></table></div>
+<p class="u2">Kerberos 4 → 5 : DES 56 bits cassable ⇒ nouveaux chiffrements (AES, RFC 3962) ; format ASN.1 extensible ; tickets <b>réexpédiables</b> (forwardable), <b>délégables</b> (proxiable), <b>renouvelables</b>, <b>postdatés</b>. <span class="src">[KRB p.54-69]</span></p>
+<h3>5.3 LanManager / NTLM et RADIUS</h3>
+<p><b>LAN Manager (LM)</b> : très vieille méthode, hachage faible des mots de passe ⇒ <span class="hp">à désactiver</span>. <b>NTLM</b> (v1 puis <b>v2</b>) : défi/réponse, utilisé en secours quand Kerberos est impossible (ex. accès par adresse IP au lieu du nom). <b>Kerberos</b> = méthode par défaut d'un domaine moderne. <span class="src">[TP-LM + +]</span></p>
+<div class="box def"><div class="t">📘 Le réglage : « Sécurité réseau : niveau de compatibilité LAN Manager »</div><p>6 niveaux (0 à 5), dans une GPO : Configuration ordinateur → Paramètres Windows → Paramètres de sécurité → Stratégies locales → <b>Options de sécurité</b>. <span class="src">[TP-LM]</span></p></div>
+<div class="wrap"><table><tr><th>Niveau</th><th>Le client envoie…</th><th>Le DC accepte…</th></tr>
+<tr><td><b>0</b> <span class="hp">faible</span></td><td>réponses LM et NTLM <span class="src">[TP-LM]</span></td><td>tout</td></tr>
+<tr><td>1-2 <span class="src">[+]</span></td><td>NTLM (v2 si négocié) ; niveau 2 : NTLM seulement</td><td>tout</td></tr>
+<tr><td>3 <span class="src">[+]</span></td><td>NTLMv2 seulement</td><td>tout</td></tr>
+<tr><td>4 <span class="src">[+]</span></td><td>NTLMv2 seulement</td><td>refuse LM</td></tr>
+<tr><td><b>5</b> <span class="hg">standard actuel</span></td><td>NTLMv2 seulement <span class="src">[TP-LM]</span></td><td>refuse LM et NTLM</td></tr></table></div>
+<div class="steps">
+<div class="step">Serveur (DC Windows Server 2019/2022) : <span class="hg">gpmc.msc</span> → modifie la Default Domain Policy (ou une GPO liée à l'OU des machines).</div>
+<div class="step">Scénario A : niveau <b>0</b> (LM vulnérable autorisé). Scénario B : niveau <b>5</b>.</div>
+<div class="step">Sur serveur <u>et</u> client Windows 10/11 : <span class="hg">gpupdate /force</span>.</div>
+<div class="step">Crée <code>User_Test</code> dans AD, puis connecte-toi depuis le client ou ouvre <code>\\NomDuServeur\c$</code>.</div>
+<div class="step">Analyse : Observateur d'événements → Journaux Windows → Sécurité → <span class="hg">ID 4624</span> → « Informations détaillées sur l'authentification » → <b>Package d'authentification</b> = LM, NTLM V1 ou NTLM V2.</div></div>
+<p><b>RADIUS</b> : serveur central qui authentifie les accès réseau (Wi-Fi, VPN, 802.1X), UDP 1812/1813, seul le mot de passe est chiffré. <span class="src">[+ ta fiche AAA]</span> Windows l'offre via le rôle NPS.</p>
+</section><div class="pager"><a href="#" data-go="5">← Précédent</a><a href="#" data-go="0">📑 Sommaire</a><a href="#" data-go="7">Suivant →</a></div></div><div class="pg" data-t="6. Mots de passe &amp; sécurité serveurs"><section><h2>6. Mots de passe, verrouillage, sécurité de base des serveurs</h2>
+<p><span class="src">[PROG p.35-36]</span> — le programme liste ces 3 sujets (contenu détaillé absent de tes PDF ⇒ <span class="src">[+]</span> notions standard).</p>
+<div class="wrap"><table><tr><th>Sujet</th><th>Réglages cités par le programme</th><th>Où le faire</th></tr>
+<tr><td><b>Stratégie de mot de passe</b></td><td><span class="hl">Durée de vie maximale</span>, <span class="hl">historique conservé</span>, <span class="hl">durée de vie minimale</span>, <span class="hl">longueur minimale</span></td><td>GPO → Configuration ordinateur → Paramètres Windows → Paramètres de sécurité → Stratégies de comptes</td></tr>
+<tr><td><b>Verrouillage de compte</b> et restrictions de session</td><td>Seuil de verrouillage, durée, délai de réinitialisation ; <span class="hl">restrictions d'ouverture de session</span> (horaires, postes autorisés)</td><td>Même endroit + propriétés du compte</td></tr>
+<tr><td><b>Sécurité de base des serveurs</b></td><td>1) <b>Mises à jour + Service Packs</b> 2) <b>Stratégie de groupe</b> 3) <b>MBSA</b> (Microsoft Baseline Security Analyzer : scanne le serveur et liste les failles)</td><td>WSUS/Windows Update · gpmc.msc · outil MBSA</td></tr></table></div>
+<div class="box ast"><div class="t">💡 Exemple concret</div><p>Politique d'école : longueur min. 8, expire tous les 90 jours, historique de 10 mots de passe (impossible de remettre l'ancien), verrouillage après 5 échecs pendant 15 min.</p></div>
+</section><div class="pager"><a href="#" data-go="6">← Précédent</a><a href="#" data-go="0">📑 Sommaire</a><a href="#" data-go="8">Suivant →</a></div></div><div class="pg" data-t="AAA · 1. Les 3 A"><section><h2>AAA · 1. Les 3 A de l'AAA</h2><div class="box def"><div class="t">📘 Définition — AAA</div><p><span class="src">[AAA]</span> <b>AAA</b> = cadre de sécurité des équipements réseau (routeurs, switches, pare-feux) pour contrôler <b>qui</b> accède à l'équipement, <b>ce qu'il a le droit d'y faire</b>, et garder <b>une trace</b> de ce qu'il y a fait.</p><ul><li><b>Authentication</b> (authentification) — Qui es-tu ?</li><li><b>Authorization</b> (autorisation) — Qu'as-tu le droit de faire ?</li><li><b>Accounting</b> (traçabilité) — Qu'as-tu fait, et quand ?</li></ul></div><div class="box ast"><div class="t">💡 Analogie de l'hôtel</div><p>Réception : on vérifie ta pièce d'identité (<span class="hb">authentification</span>) → ta carte n'ouvre que <u>ta</u> chambre (<span class="hb">autorisation</span>) → le registre note tes entrées/sorties (<span class="hb">accounting</span>).</p></div><div class="wrap"><table><tr><th>Composant</th><th>Question</th><th>Ce qu'il contrôle</th><th>Exemple</th></tr><tr><td><b>Authentication</b></td><td>Qui es-tu ?</td><td>Identité (identifiant + mot de passe, certificat, clé…)</td><td>Login sur la console d'un routeur</td></tr><tr><td><b>Authorization</b></td><td>Qu'as-tu le droit de faire ?</td><td>Commandes/ressources autorisées une fois authentifié</td><td>Technicien : niveau 1 ; admin : niveau 15</td></tr><tr><td><b>Accounting</b></td><td>Qu'as-tu fait ?</td><td>Journalise connexions, durée, commandes</td><td>« admin1 connecté à 10h02, a tapé reload à 10h15 »</td></tr></table></div><div class="box ast"><div class="t">💡 Ordre à mémoriser</div><p>Toujours : <b>vérifier l'identité</b> → <b>vérifier les droits</b> → <b>enregistrer l'activité</b>. On n'autorise pas quelqu'un qu'on n'a pas encore authentifié.</p></div><h3>1.1 Pourquoi mettre en place l'AAA ?</h3><p>Sans AAA, un équipement Cisco n'a qu'un <span class="hl">mot de passe de ligne</span> identique pour tous, sans nom d'utilisateur, sans journal, sans distinction de droits. L'AAA apporte :</p><ul><li>un <b>identifiant individuel</b> par administrateur (traçabilité nominative)</li><li>une <b>gestion centralisée</b> possible (un serveur pour tout le réseau)</li><li>un <b>contrôle fin des droits</b> (qui tape quelles commandes)</li><li>une <b>journalisation</b> des actions, utile pour les audits</li><li>un <b>mécanisme de secours</b> (fallback) si le serveur est injoignable</li></ul><h3>1.2 Deux grands modes</h3><div class="wrap"><table><tr><th>Mode</th><th>Où sont les comptes ?</th><th>Avantage</th><th>Limite</th></tr><tr><td><span class="hg">AAA locale</span></td><td>Dans la config de l'équipement (<code>username</code>)</td><td>Marche sans réseau ni serveur</td><td>Pas centralisé : à recréer sur chaque équipement</td></tr><tr><td><span class="hb">AAA serveur — TACACS+</span></td><td>Serveur externe (Cisco ACS, ISE, tac_plus…)</td><td>Contrôle très fin des commandes (device administration)</td><td>Dépend du serveur et du réseau</td></tr><tr><td><span class="hp">AAA serveur — RADIUS</span></td><td>Serveur externe (FreeRADIUS, Cisco ISE…)</td><td>Standard ouvert : accès réseau (Wi-Fi, VPN, 802.1X)</td><td>Moins fin pour les commandes CLI</td></tr></table></div></section><div class="pager"><a href="#" data-go="7">← Précédent</a><a href="#" data-go="0">📑 Sommaire</a><a href="#" data-go="9">Suivant →</a></div></div><div class="pg" data-t="AAA · 2. Lignes &amp; method lists"><section><h2>AAA · 2. Lignes d'accès et listes de méthodes (method lists)</h2><div class="wrap"><table><tr><th>Ligne</th><th>Commande</th><th>Usage</th></tr><tr><td><b>Console</b></td><td><code>line console 0</code></td><td>Accès physique par câble console</td></tr><tr><td><b>VTY</b></td><td><code>line vty 0 4</code> (ou 0 15)</td><td>Accès distant (Telnet / SSH)</td></tr><tr><td><b>AUX</b></td><td><code>line aux 0</code></td><td>Accès distant par modem (rare aujourd'hui)</td></tr></table></div><div class="box def"><div class="t">📘 Liste de méthodes (method list)</div><p>La <b>séquence</b> de méthodes (authentification, autorisation ou accounting) que le routeur essaie <u>dans l'ordre</u> jusqu'à ce que l'une réponde. Deux formes :</p><ul><li><b>default</b> — s'applique automatiquement aux lignes sans liste explicite</li><li><b>nommée</b> (ex. <code>CONSOLE-AUTH</code>) — à appliquer à la main sur chaque ligne avec <code>login authentication &lt;nom&gt;</code></li></ul></div><pre class="cli">aaa authentication login {default | NOM-LISTE} méthode1 [méthode2] [méthode3] …</pre><svg viewBox="0 0 760 300" role="img" style="width:100%;max-width:760px;display:block;background:#fff;border:2px solid #1d2a44;border-radius:8px;margin:0 0 32px;font-family:Caveat,cursive;font-size:20px;fill:#1d2a44"><defs><marker id="m5" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8 z" fill="context-stroke"/></marker></defs><rect x="10" y="105" width="100" height="60" rx="12" fill="#e1f4ff" stroke="#1d2a44" stroke-width="2.5"/><text x="60.0" y="129.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">Connexion</text><text x="60.0" y="153.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">d'un admin</text><line x1="110" y1="135" x2="140" y2="135" stroke="#1d2a44" stroke-width="3" marker-end="url(#m5)"/><rect x="140" y="100" width="150" height="70" rx="12" fill="#ffe08a" stroke="#1d2a44" stroke-width="2.5"/><text x="215.0" y="129.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">méthode 1</text><text x="215.0" y="153.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">group tacacs+</text><line x1="290" y1="112" x2="360" y2="62" stroke="#1f9d55" stroke-width="3" marker-end="url(#m5)"/><text x="250" y="78" text-anchor="middle" font-size="17" fill="#1f9d55" stroke="none">le serveur répond</text><rect x="360" y="20" width="200" height="70" rx="12" fill="#e9ffe9" stroke="#1d2a44" stroke-width="2.5"/><text x="460.0" y="49.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">✅ accepté ou ❌ refusé</text><text x="460.0" y="73.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">décision finale : on s'arrête</text><line x1="290" y1="155" x2="360" y2="190" stroke="#e8780c" stroke-width="3" marker-end="url(#m5)"/><text x="250" y="232" text-anchor="middle" font-size="17" fill="#e8780c" stroke="none">pas de réponse (timeout)</text><rect x="360" y="155" width="150" height="70" rx="12" fill="#ffe08a" stroke="#1d2a44" stroke-width="2.5"/><text x="435.0" y="184.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">méthode 2</text><text x="435.0" y="208.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">local</text><line x1="510" y1="190" x2="590" y2="190" stroke="#e8780c" stroke-width="3" marker-end="url(#m5)"/><rect x="590" y="155" width="160" height="70" rx="12" fill="#e9ffe9" stroke="#1d2a44" stroke-width="2.5"/><text x="670.0" y="184.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">✅ ou ❌</text><text x="670.0" y="208.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">décision finale</text><text x="380" y="275" text-anchor="middle" font-size="20" fill="#d93a3a" stroke="none">⚠️ Un REFUS ne passe PAS à la méthode suivante : seul un timeout le fait !</text></svg><p>Le routeur essaie <b>méthode1</b> ; si le serveur ne répond pas (timeout), il passe à <b>méthode2</b>, etc. Si une méthode répond mais <span class="hp">refuse</span> (mauvais mot de passe), il <b>n'essaie pas la suivante</b> : accès refusé.</p><div class="wrap"><table><tr><th>Mot-clé</th><th>Signification</th></tr><tr><td><code>local</code></td><td>Base d'utilisateurs locale (<code>username</code>)</td></tr><tr><td><code>group tacacs+</code></td><td>Serveur(s) TACACS+ déclaré(s)</td></tr><tr><td><code>group radius</code></td><td>Serveur(s) RADIUS déclaré(s)</td></tr><tr><td><code>group NOM-GROUPE</code></td><td>Groupe de serveurs personnalisé (sous-ensemble)</td></tr><tr><td><code>enable</code></td><td>Mot de passe enable en secours</td></tr><tr><td><code>none</code></td><td>Accès sans authentification (à éviter, sauf test)</td></tr></table></div><div class="box pie"><div class="t">🪤 Erreur fréquente</div><p>Liste <b>nommée</b> créée mais jamais appliquée avec <code>login authentication &lt;nom&gt;</code> : la ligne garde l'ancien mode, la liste n'a <span class="hp">aucun effet</span>.</p></div><div class="box ast"><div class="t">💡 Astuce</div><p>Toujours une méthode de secours (<code>local</code> ou <code>enable</code>) après <code>group tacacs+</code> / <code>group radius</code>, pour ne pas être bloqué dehors si le serveur tombe.</p></div></section><div class="pager"><a href="#" data-go="8">← Précédent</a><a href="#" data-go="0">📑 Sommaire</a><a href="#" data-go="10">Suivant →</a></div></div><div class="pg" data-t="AAA · 3. AAA locale"><section><h2>AAA · 3. AAA locale — console et lignes vty</h2><p><span class="src">[AAA]</span> TP « AAA locale console &amp; vty » : la base d'utilisateurs est <b>dans la configuration du routeur/switch</b>, sans serveur externe.</p><div class="wrap"><table><tr><th></th><th>Détail</th></tr><tr><td>✅ Avantages</td><td>Simple ; marche même si réseau ou serveur en panne ; aucune dépendance externe</td></tr><tr><td>⚠️ Inconvénients</td><td>Pas centralisé (une base par équipement) ; pénible sur un grand parc ; pas de journal centralisé</td></tr></table></div><h3>Étapes pas à pas</h3><div class="steps"><div class="step"><b>Activer le modèle AAA</b> (sans lui, toutes les commandes <code>aaa …</code> sont indisponibles).<pre class="cli"><span class="pr">Router(config)# </span><span class="k">aaa new-model</span></pre></div><div class="step"><b>Créer les comptes locaux</b> avec <code>secret</code> (jamais <code>password</code> en clair).<pre class="cli"><span class="pr">Router(config)# </span><span class="k">username admin privilege 15 secret Cisco12345</span>
+<span class="pr">Router(config)# </span><span class="k">username technicien privilege 1 secret Tech12345</span></pre></div><div class="step"><b>Créer la liste de méthodes.</b> Option A — <span class="hl">default</span> (applicable partout) puis Option B — liste <span class="hl">nommée</span> (à appliquer à la main).<pre class="cli"><span class="pr">Router(config)# </span><span class="k">aaa authentication login default local</span>
+<span class="pr">Router(config)# </span><span class="k">aaa authentication login CONSOLE-AUTH local</span></pre></div><div class="step"><b>Appliquer sur la console.</b> Avec la liste <code>default</code>, <code>login authentication</code> est facultatif (déjà automatique).<pre class="cli"><span class="pr">Router(config)# </span><span class="k">line console 0</span>
+<span class="pr">Router(config-line)# </span><span class="k">login authentication CONSOLE-AUTH</span>
+<span class="pr">Router(config-line)# </span><span class="k">exec-timeout 5 0</span></pre></div><div class="step"><b>Appliquer sur les lignes vty</b> (accès distant). Limite à <code>ssh</code> : le Telnet envoie les identifiants en clair.<pre class="cli"><span class="pr">Router(config)# </span><span class="k">line vty 0 4</span>
+<span class="pr">Router(config-line)# </span><span class="k">login authentication CONSOLE-AUTH</span>
+<span class="pr">Router(config-line)# </span><span class="k">transport input ssh</span></pre></div><div class="step"><b>Vérifier</b>, puis déconnecte-toi et reconnecte-toi (console ou SSH) : identifiant <u>et</u> mot de passe doivent être demandés.<pre class="cli"><span class="pr">Router# </span><span class="k">show running-config | section line</span>
+<span class="pr">Router# </span><span class="k">show running-config | include aaa|username</span></pre></div></div><h3>Exemple de configuration complète</h3><pre class="cli"><span class="pr">Router(config)# </span><span class="k">aaa new-model</span>
+<span class="pr">Router(config)# </span><span class="k">username admin privilege 15 secret Cisco12345</span>
+<span class="pr">Router(config)# </span><span class="k">aaa authentication login default local</span>
+<span class="pr">Router(config)# </span><span class="k">line console 0</span>
+<span class="pr">Router(config-line)# </span><span class="k">exec-timeout 5 0</span>
+<span class="pr">Router(config-line)# </span><span class="k">exit</span>
+<span class="pr">Router(config)# </span><span class="k">line vty 0 4</span>
+<span class="pr">Router(config-line)# </span><span class="k">transport input ssh</span>
+<span class="pr">Router(config-line)# </span><span class="k">exit</span></pre><div class="box imp"><div class="t">⭐ À retenir — AAA locale</div><ul><li>Toujours <code>username … secret …</code>.</li><li><code>aaa new-model</code> = préalable obligatoire.</li><li><code>default</code> s'applique seule ; une liste nommée s'applique avec <code>login authentication &lt;nom&gt;</code>.</li></ul></div></section><div class="pager"><a href="#" data-go="9">← Précédent</a><a href="#" data-go="0">📑 Sommaire</a><a href="#" data-go="11">Suivant →</a></div></div><div class="pg" data-t="AAA · 4. TACACS+ &amp; RADIUS"><section><h2>AAA · 4. AAA serveur — TACACS+ et RADIUS (console)</h2><p><span class="src">[AAA]</span> TP « AAA serveur TACACS+ / RADIUS console » : l'authentification (et autorisation, accounting) est <b>déléguée à un serveur externe</b> (Cisco ACS / ISE, tac_plus, FreeRADIUS…).</p><svg viewBox="0 0 760 310" role="img" style="width:100%;max-width:760px;display:block;background:#fff;border:2px solid #1d2a44;border-radius:8px;margin:0 0 32px;font-family:Caveat,cursive;font-size:20px;fill:#1d2a44"><defs><marker id="m6" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8 z" fill="context-stroke"/></marker></defs><rect x="10" y="100" width="120" height="70" rx="12" fill="#e1f4ff" stroke="#1d2a44" stroke-width="2.5"/><text x="70.0" y="129.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">👤 Admin</text><text x="70.0" y="153.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">console / SSH</text><rect x="200" y="100" width="130" height="70" rx="12" fill="#ffe08a" stroke="#1d2a44" stroke-width="2.5"/><text x="265.0" y="129.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">🌐 Routeur</text><text x="265.0" y="153.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">client AAA</text><rect x="500" y="30" width="180" height="80" rx="12" fill="#e9ffe9" stroke="#1d2a44" stroke-width="2.5"/><text x="590.0" y="64.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">🛰️ Serveur AAA</text><text x="590.0" y="88.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">TACACS+ / RADIUS</text><rect x="500" y="175" width="180" height="70" rx="12" fill="#f1e6ff" stroke="#1d2a44" stroke-width="2.5"/><text x="590.0" y="204.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">💾 base locale</text><text x="590.0" y="228.0" text-anchor="middle" font-size="20" fill="#1d2a44" stroke="none">username …</text><line x1="130" y1="135" x2="200" y2="135" stroke="#1d2a44" stroke-width="3" marker-end="url(#m6)"/><circle cx="165" cy="120" r="13" fill="#d93a3a"/><text x="165" y="127" text-anchor="middle" font-size="19" fill="#fff" stroke="none">1</text><line x1="330" y1="112" x2="500" y2="70" stroke="#2457c5" stroke-width="3" marker-end="url(#m6)"/><circle cx="415" cy="80" r="13" fill="#d93a3a"/><text x="415" y="87" text-anchor="middle" font-size="19" fill="#fff" stroke="none">2</text><line x1="500" y1="95" x2="330" y2="130" stroke="#1f9d55" stroke-width="3" marker-end="url(#m6)"/><circle cx="415" cy="125" r="13" fill="#d93a3a"/><text x="415" y="132" text-anchor="middle" font-size="19" fill="#fff" stroke="none">3</text><line x1="330" y1="160" x2="500" y2="205" stroke="#e8780c" stroke-width="3" stroke-dasharray="7 5" marker-end="url(#m6)"/><circle cx="415" cy="196" r="13" fill="#d93a3a"/><text x="415" y="203" text-anchor="middle" font-size="19" fill="#fff" stroke="none">4</text><text x="10" y="200" text-anchor="start" font-size="17" fill="#1d2a44" stroke="none">① login  ② demande au serveur  ③ accepte / refuse</text><text x="10" y="225" text-anchor="start" font-size="17" fill="#e8780c" stroke="none">④ serveur injoignable ⇒ secours : base locale</text><text x="380" y="285" text-anchor="middle" font-size="18" fill="#1d2a44" stroke="none">TACACS+ : TCP 49, tout chiffré   |   RADIUS : UDP 1812/1813, mot de passe chiffré</text></svg><h3>4.1 TACACS+ vs RADIUS</h3><div class="wrap"><table><tr><th>Critère</th><th>TACACS+</th><th>RADIUS</th></tr><tr><td>Origine</td><td>Propriétaire Cisco</td><td>Standard ouvert (RFC 2865/2866)</td></tr><tr><td>Transport</td><td>TCP, port 49</td><td>UDP, ports 1812 (authentification) et 1813 (accounting)</td></tr><tr><td>Chiffrement</td><td><b>Tout le paquet</b></td><td><b>Uniquement le mot de passe</b></td></tr><tr><td>Séparation des 3 A</td><td>Authentification, autorisation, accounting <b>séparés</b></td><td>Authentification + autorisation <b>combinées</b></td></tr><tr><td>Autorisation par commande</td><td>✅ Oui (commandes CLI, niveau par niveau)</td><td>❌ Non, pas nativement</td></tr><tr><td>Usage typique</td><td><b>Administration des équipements</b> (qui tape quelles commandes)</td><td><b>Accès réseau des utilisateurs</b> (Wi-Fi, VPN, 802.1X)</td></tr></table></div><h3>4.2 Configuration TACACS+</h3><div class="steps"><div class="step"><b>Déclarer le serveur</b><pre class="cli"><span class="pr">Router(config)# </span><span class="k">tacacs server SRV-TACACS</span>
+<span class="pr">Router(config-server-tacacs)# </span><span class="k">address ipv4 192.168.1.10</span>
+<span class="pr">Router(config-server-tacacs)# </span><span class="k">key Cisco123secret</span>
+<span class="pr">Router(config-server-tacacs)# </span><span class="k">exit</span></pre></div><div class="step">(Optionnel) <b>Regrouper</b> le serveur dans un groupe<pre class="cli"><span class="pr">Router(config)# </span><span class="k">aaa group server tacacs+ TAC-GROUP</span>
+<span class="pr">Router(config-sg-tacacs+)# </span><span class="k">server name SRV-TACACS</span>
+<span class="pr">Router(config-sg-tacacs+)# </span><span class="k">exit</span></pre></div><div class="step"><b>Activer AAA + liste d'authentification.</b> <code>local</code> après <code>group tacacs+</code> = secours si le serveur ne répond pas.<pre class="cli"><span class="pr">Router(config)# </span><span class="k">aaa new-model</span>
+<span class="pr">Router(config)# </span><span class="k">aaa authentication login default group tacacs+ local</span></pre></div><div class="step"><b>Appliquer sur la console</b><pre class="cli"><span class="pr">Router(config)# </span><span class="k">line console 0</span>
+<span class="pr">Router(config-line)# </span><span class="k">login authentication default</span></pre></div><div class="step"><b>Autorisation et accounting</b> (spécifiques TACACS+). Le niveau <code>commands 15</code> (par commande) ne marche qu'avec TACACS+.<pre class="cli"><span class="pr">Router(config)# </span><span class="k">aaa authorization exec default group tacacs+ local</span>
+<span class="pr">Router(config)# </span><span class="k">aaa authorization commands 15 default group tacacs+ local</span>
+<span class="pr">Router(config)# </span><span class="k">aaa accounting exec default start-stop group tacacs+</span>
+<span class="pr">Router(config)# </span><span class="k">aaa accounting commands 15 default start-stop group tacacs+</span></pre></div></div><h3>4.3 Configuration RADIUS</h3><div class="steps"><div class="step"><b>Déclarer le serveur</b><pre class="cli"><span class="pr">Router(config)# </span><span class="k">radius server SRV-RADIUS</span>
+<span class="pr">Router(config-radius-server)# </span><span class="k">address ipv4 192.168.1.20 auth-port 1812 acct-port 1813</span>
+<span class="pr">Router(config-radius-server)# </span><span class="k">key testing123</span>
+<span class="pr">Router(config-radius-server)# </span><span class="k">exit</span></pre></div><div class="step"><b>Activer AAA + liste</b><pre class="cli"><span class="pr">Router(config)# </span><span class="k">aaa new-model</span>
+<span class="pr">Router(config)# </span><span class="k">aaa authentication login default group radius local</span></pre></div><div class="step"><b>Appliquer sur la console</b><pre class="cli"><span class="pr">Router(config)# </span><span class="k">line console 0</span>
+<span class="pr">Router(config-line)# </span><span class="k">login authentication default</span></pre></div><div class="step"><b>Accounting</b> (RADIUS : pas d'accounting détaillé par commande).<pre class="cli"><span class="pr">Router(config)# </span><span class="k">aaa accounting exec default start-stop group radius</span></pre></div></div><div class="box imp"><div class="t">⭐ À retenir — AAA serveur</div><ul><li>Déclarer le serveur (<code>tacacs server</code> / <code>radius server</code>) avec sa clé partagée <b>avant</b> la liste d'authentification.</li><li>Garder <code>local</code> en secours après <code>group tacacs+</code> / <code>group radius</code>.</li><li>Seul TACACS+ permet le contrôle fin des commandes par niveau de privilège.</li></ul></div></section><div class="pager"><a href="#" data-go="10">← Précédent</a><a href="#" data-go="0">📑 Sommaire</a><a href="#" data-go="12">Suivant →</a></div></div><div class="pg" data-t="AAA · 5. Comparatif"><section><h2>AAA · 5. Comparaison des 3 méthodes</h2><div class="wrap"><table><tr><th>Critère</th><th>AAA locale</th><th>TACACS+</th><th>RADIUS</th></tr><tr><td><b>Stockage des comptes</b></td><td>Sur l'équipement</td><td>Serveur externe dédié</td><td>Serveur externe dédié</td></tr><tr><td><b>Dépendance réseau</b></td><td>Aucune</td><td>Oui (accès au serveur)</td><td>Oui (accès au serveur)</td></tr><tr><td><b>Protocole / port</b></td><td>—</td><td>TCP / 49</td><td>UDP / 1812, 1813</td></tr><tr><td><b>Chiffrement</b></td><td>Mot de passe chiffré localement (secret)</td><td>Paquet entier</td><td>Mot de passe uniquement</td></tr><tr><td><b>Granularité des droits</b></td><td>Par niveau de privilège local</td><td>Très fine (par commande)</td><td>Plus limitée</td></tr><tr><td><b>Usage typique</b></td><td>Petit réseau, secours</td><td>Administration des équipements</td><td>Accès réseau utilisateurs (Wi-Fi, VPN, 802.1X)</td></tr></table></div><div class="box ast"><div class="t">💡 Pour ne pas les confondre</div><ul><li><b>Local</b> = « pas de réseau requis, secours toujours dispo ».</li><li><b>TACACS+</b> = Cisco + <b>C</b>ontrôle des <b>C</b>ommandes + <b>C</b>hiffré en entier (3 C).</li><li><b>RADIUS</b> = <b>R</b>éseau (Wi-Fi/VPN) + <b>R</b>apide (UDP) + standa<b>RD</b> ouvert.</li></ul></div></section><div class="pager"><a href="#" data-go="11">← Précédent</a><a href="#" data-go="0">📑 Sommaire</a><a href="#" data-go="13">Suivant →</a></div></div><div class="pg" data-t="AAA · 6. Labs Packet Tracer"><section><h2>AAA · 6. Les 3 travaux pratiques Packet Tracer</h2><div class="box pie"><div class="t">⚠️ Remarque sur la source</div><p>Les fichiers Packet Tracer (<code>.pkt</code>) sont chiffrés : topologie et IP exactes n'ont pas pu être extraites. Ce récap reprend le déroulé <b>standard</b> avec les commandes Cisco IOS de référence : remplace IP, noms et secrets d'exemple par ceux de ta maquette.</p></div><h3>Lab 1 — AAA, vue d'ensemble</h3><p><b>Objectif :</b> comprendre le fonctionnement global avant le local puis le serveur.</p><ul><li>Comprendre le rôle des 3 A.</li><li>Observer <b>sans AAA</b> (mot de passe de ligne) puis <b>avec AAA</b>.</li><li>Identifier les lignes concernées : console, vty.</li></ul><h3>Lab 2 — AAA locale (console &amp; vty)</h3><p><b>Objectif :</b> authentification par compte individuel, sans serveur.</p><div class="wrap"><table><tr><th>Élément</th><th>Valeur d'exemple</th></tr><tr><td>Équipement</td><td>Router / Switch Cisco IOS</td></tr><tr><td>Comptes locaux</td><td>admin (privilège 15), technicien (privilège 1)</td></tr><tr><td>Lignes</td><td>console 0, vty 0 4</td></tr><tr><td>Commande clé</td><td><code>aaa authentication login default local</code></td></tr></table></div><p><b>Vérification :</b> une connexion console/SSH demande identifiant <u>et</u> mot de passe.</p><h3>Lab 3 — AAA serveur (TACACS+ / RADIUS, console)</h3><p><b>Objectif :</b> déléguer la console à un serveur externe, avec secours local.</p><div class="wrap"><table><tr><th>Élément</th><th>Valeur d'exemple</th></tr><tr><td>Serveur TACACS+</td><td>192.168.1.10, clé <code>Cisco123secret</code></td></tr><tr><td>Serveur RADIUS</td><td>192.168.1.20, ports 1812/1813, clé <code>testing123</code></td></tr><tr><td>Ligne</td><td>console 0</td></tr><tr><td>Commande clé (TACACS+)</td><td><code>aaa authentication login default group tacacs+ local</code></td></tr><tr><td>Commande clé (RADIUS)</td><td><code>aaa authentication login default group radius local</code></td></tr></table></div><p><b>Vérification :</b> la console interroge le serveur ; s'il est éteint/injoignable, le routeur bascule sur <code>local</code>.</p><div class="box ast"><div class="t">📌 Bon réflexe en Packet Tracer</div><p>Teste dans cet ordre : (1) serveur <b>éteint</b> → le compte <code>local</code> de secours marche ; (2) serveur <b>allumé</b> avec la bonne clé → le compte du serveur marche ; (3) <b>mauvaise clé</b> partagée → l'authentification échoue proprement.</p></div></section><div class="pager"><a href="#" data-go="12">← Précédent</a><a href="#" data-go="0">📑 Sommaire</a><a href="#" data-go="14">Suivant →</a></div></div><div class="pg" data-t="AAA · 7. Vérification &amp; dépannage"><section><h2>AAA · 7. Vérification et dépannage</h2><div class="wrap"><table><tr><th>Commande</th><th>Utilité</th></tr><tr><td><code>show running-config | include aaa</code></td><td>Lister les commandes AAA actives</td></tr><tr><td><code>show aaa servers</code></td><td>État des serveurs TACACS+/RADIUS déclarés</td></tr><tr><td><code>debug aaa authentication</code></td><td>Suivre en direct une authentification</td></tr><tr><td><code>debug tacacs</code></td><td>Détailler les échanges avec un serveur TACACS+</td></tr><tr><td><code>debug radius</code></td><td>Détailler les échanges avec un serveur RADIUS</td></tr><tr><td><code>test aaa group tacacs+ user pass legacy</code></td><td>Tester un identifiant/mot de passe contre le groupe TACACS+ sans se déconnecter</td></tr></table></div><div class="box pie"><div class="t">⚠️ Avant de couper la session</div><p>Avant de valider une nouvelle config AAA sur les lignes <b>vty</b>, garde une session déjà ouverte (ou la console) tant que la nouvelle authentification n'est pas validée : une erreur peut couper tout accès distant.</p></div></section><div class="pager"><a href="#" data-go="13">← Précédent</a><a href="#" data-go="0">📑 Sommaire</a><a href="#" data-go="15">Suivant →</a></div></div><div class="pg" data-t="AAA · 8. À retenir"><section><h2>AAA · 8. À retenir — l'essentiel</h2><div class="box imp"><div class="t">🧠 Les 7 points essentiels</div><ol><li><b>AAA</b> = Authentication (qui es-tu) + Authorization (qu'as-tu le droit de faire) + Accounting (qu'as-tu fait).</li><li><code>aaa new-model</code> : préalable obligatoire.</li><li>Une liste de méthodes essaie chaque méthode <b>dans l'ordre</b>, et passe à la suivante seulement si le serveur ne répond pas (pas en cas de refus).</li><li><b>AAA locale</b> : pas de dépendance réseau, mais pas centralisée.</li><li><b>TACACS+</b> (TCP/49, tout chiffré) : administration des équipements, contrôle fin des commandes.</li><li><b>RADIUS</b> (UDP/1812-1813, mot de passe chiffré) : standard ouvert, accès réseau des utilisateurs.</li><li>Toujours une méthode de secours <code>local</code> après un serveur externe.</li></ol></div><p><span class="hl">AAA</span> <span class="hl">Authentication</span> <span class="hl">Authorization</span> <span class="hl">Accounting</span> <span class="hl">aaa new-model</span> <span class="hl">method list</span> <span class="hl">login authentication</span> <span class="hl">username secret</span> <span class="hl">TACACS+</span> <span class="hl">RADIUS</span> <span class="hl">TCP/49</span> <span class="hl">UDP/1812-1813</span> <span class="hl">group tacacs+</span> <span class="hl">group radius</span> <span class="hl">console</span> <span class="hl">vty</span> <span class="hl">privilege 15</span> <span class="hl">debug aaa</span></p></section><div class="pager"><a href="#" data-go="14">← Précédent</a><a href="#" data-go="0">📑 Sommaire</a><a href="#" data-go="16">Suivant →</a></div></div><div class="pg" data-t="Révision du cours Windows"><section><h2>Révision — Authentification, approbations, Kerberos</h2>
+<details><summary>Q1. Approbation créée automatiquement, bidirectionnelle et transitive ?</summary><p>Prédéfinie (parent/enfant et arborescence). <span class="src">[C03]</span></p></details>
+<details><summary>Q2. Pourquoi créer une approbation raccourcie ?</summary><p>Éviter le long parcours de la chaîne de domaines. <span class="src">[C03 §2.2]</span></p></details>
+<details><summary>Q3. Externe ou forêt : laquelle est transitive ?</summary><p>Forêt. L'externe ne l'est pas. <span class="src">[C03 · STR]</span></p></details>
+<details><summary>Q4. Que contiennent le KDC et que délivre chaque partie ?</summary><p>AS → TGT ; TGS → tickets de service. <span class="src">[KRB]</span></p></details>
+<details><summary>Q5. Pourquoi synchroniser les horloges ?</summary><p>Kerberos tolère ~5 min d'écart (clock skew) ; au-delà, plus de tickets. <span class="src">[KRB · STR]</span></p></details>
+<details><summary>Q6. Différence groupe de distribution / sécurité ?</summary><p>Distribution = mails sans droits ; sécurité = permissions.</p></details>
+<details><summary>Q7. À quoi sert le filtrage SID ?</summary><p>Bloquer l'usurpation de SID via SID History sur les approbations externes. <span class="src">[STR p.26]</span></p></details>
+<details><summary>Q8. Cite 4 paramètres d'une stratégie de mot de passe.</summary><p>Durée max, historique, durée min, longueur min. <span class="src">[PROG]</span></p></details>
+<details><summary>Q9. Quel niveau LAN Manager est le standard actuel ?</summary><p>Niveau 5 : NTLMv2 seulement, LM et NTLM refusés. <span class="src">[TP-LM]</span></p></details>
+<details><summary>Q10. Quel événement prouve qu'un compte du parent s'est authentifié chez l'enfant ?</summary><p>ID 4624 (ouverture de session réussie) dans le journal Sécurité. <span class="src">[TP-PE]</span></p></details>
+<details><summary>Q11. Comment limiter une GPO aux portables ?</summary><p>Filtre WMI sur Win32_SystemEnclosure (ChassisTypes = 9). <span class="src">[TP-GPO]</span></p></details>
+<details><summary>Q12. Quel ID trace les tentatives d'accès à un fichier ?</summary><p>4663, après audit GPO + audit NTFS. <span class="src">[TP-GPO]</span></p></details>
+</section><div class="pager"><a href="#" data-go="15">← Précédent</a><a href="#" data-go="0">📑 Sommaire</a><a href="#" data-go="17">Suivant →</a></div></div><div class="pg" data-t="Révision AAA"><section><h2>Révision — AAA Cisco</h2><p><span class="src">[AAA]</span> Clique sur une question pour voir la réponse.</p><details><summary>Q1. Que signifie AAA ?</summary><p>Authentication, Authorization, Accounting.</p></details><details><summary>Q2. Quelle commande active le modèle AAA sur un routeur Cisco ?</summary><p><code>aaa new-model</code></p></details><details><summary>Q3. Différence entre liste « default » et liste nommée ?</summary><p>La liste default s'applique automatiquement à toutes les lignes ; une liste nommée s'applique à la main sur chaque ligne avec <code>login authentication &lt;nom&gt;</code>.</p></details><details><summary>Q4. Pourquoi toujours ajouter « local » après « group tacacs+ » ?</summary><p>Méthode de secours si le serveur est injoignable : on évite d'être bloqué hors de l'équipement.</p></details><details><summary>Q5. Port et protocole de transport de TACACS+ ?</summary><p>TCP, port 49.</p></details><details><summary>Q6. Ports de RADIUS ?</summary><p>UDP, 1812 (authentification) et 1813 (accounting).</p></details><details><summary>Q7. Principale différence de chiffrement TACACS+ / RADIUS ?</summary><p>TACACS+ chiffre tout le paquet ; RADIUS seulement le mot de passe.</p></details><details><summary>Q8. Quel protocole contrôle finement les commandes CLI autorisées ?</summary><p>TACACS+ (via <code>aaa authorization commands</code>).</p></details><details><summary>Q9. Pourquoi « username … secret … » plutôt que « password » ?</summary><p>« secret » chiffre le mot de passe dans la config ; « password » peut le laisser en clair (ou faiblement chiffré).</p></details><details><summary>Q10. Protocole recommandé sur les vty plutôt que Telnet, et pourquoi ?</summary><p>SSH : il chiffre la session, Telnet transmet les identifiants en clair.</p></details><details><summary>Q11. Usage privilégié de RADIUS par rapport à TACACS+ ?</summary><p>Accès réseau des utilisateurs finaux (Wi-Fi, VPN, 802.1X) ; TACACS+ sert plutôt à l'administration des équipements.</p></details><details><summary>Q12. Que déclarer avant une liste d'authentification TACACS+/RADIUS ?</summary><p>Le serveur lui-même (IP + clé partagée) avec <code>tacacs server</code> ou <code>radius server</code>.</p></details></section><div class="pager"><a href="#" data-go="16">← Précédent</a><a href="#" data-go="0">📑 Sommaire</a><span></span></div></div></div><script>const P=[...document.querySelectorAll('.pg')],s=document.getElementById('j');
+function show(i){P.forEach((p,k)=>p.classList.toggle('on',k==i));s.value=i;document.title=P[i].dataset.t;window.scrollTo(0,0)}
+document.addEventListener('click',e=>{const a=e.target.closest('[data-go]');if(a){e.preventDefault();show(+a.dataset.go)}});
+s.onchange=()=>show(+s.value)</script></body></html>
